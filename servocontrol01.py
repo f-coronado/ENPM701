@@ -1,19 +1,88 @@
 import RPi.GPIO as gpio
+import time
+import cv2 as cv
 
-def key_input(event):
-        init()
-        print("key: ", event)
-        key_press = event
-        tf = 1
+def cycle(duration):
 
-        if key_press.lower() == 'f':
-                forward(tf)
-        elif key_press.lower() == 'b':
-                reverse(tf)
-        elif key_press.lower() == 'l':
-                pivotleft(tf)
-        elif key_press.lower() == 'r':
-                pivotright(tf)
-        else:
-                print("invalid key pressed")
+	pwm.ChangeDutyCycle(4)
+	ret, frame = cap.read()
+	frame4 = cv.putText(frame, "Duty: 4%", location, font, scale, white, thickness) 
+	time.sleep(duration)
 
+	pwm.ChangeDutyCycle(5)
+	ret, frame = cap.read()
+	frame5 = cv.putText(frame, "Duty: 5%", location, font, scale, white, thickness) 
+	time.sleep(duration)
+	
+	pwm.ChangeDutyCycle(9)
+	ret, frame = cap.read()
+	frame9 = cv.putText(frame, "Duty: 9%", location, font, scale, white, thickness) 
+
+def set_cycle(duty_cycle):
+	max_cycle = 9
+	if duty_cycle > max_cycle:
+		duty_cycle = max_cycle
+	pwm.ChangeDutyCycle(duty_cycle)
+
+def write_on_frame(duty_cycle):
+
+	font = cv.FONT_HERSHEY_SIMPLEX
+	location = (15, 15)
+	white = (255, 255, 255)
+	thickness = 2
+	scale = 1
+
+	ret, frame = cap.read()
+	cv.putText(frame, "Duty: {}%".format(duty_cycle), location, font, scale, white, thickness) 
+	cv.imwrite("duty_{}.jpg".format(duty_cycle), frame)
+	
+def create_video():
+	for i in range(min_cycle, max_cycle + 1):
+		frame = cv.imread("duty_{}.jpg".format(i))
+		out.write(frame)
+
+def main(duration):
+
+	# setup gpio pins and set pin 36 as output 
+	gpio.setmode(gpio.BOARD)
+	gpio.setup(36, gpio.OUT)
+	pwm = gpio.PWM(36, 50)
+	pwm.start(5) # start PWM frequency to 5% duty cycle
+
+	# initialize camera
+	cap = cv.VideoCapture(0)
+	if not cap.isOpened():
+		print("couldn't open camera")
+		exit()
+
+	# define video properties
+	video_file = "dutyCycle.mp4"
+	fps = 30
+	fourcc = cv.VideoWriter_fourcc(*'XVID')
+	out = cv.VideoWriter('dutyCycle.mp4', fourcc, fps, (int(cap.get(3)), int(cap.get(4))))
+
+	min_cycle = 3
+	max_cycle = 9
+
+	pwm.start(min_cycle)
+	
+	for duty_cycle in range(min_cycle, max_cycle + 1):
+		set_cycle(duty_cycle)
+		time.sleep(duration)
+		write_on_frame(duty_cycle)
+	for duty_cycle in range(max_cycle - 1, min_cycle - 1, -1):
+		set_cycle(duty_cycle)
+		time.sleep(duration)
+		write_on_frame(duty_cycle)
+
+	create_video()
+	pwm.stop()
+	gpio.cleanup()
+	cap.release()
+
+
+if __name__ == "__main__":
+	# ask user for duration of delay between duty cycles
+	duration = input("enter duration: ")
+	duration = int(duration)
+	main(duration)
