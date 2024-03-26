@@ -81,10 +81,6 @@ def main(duration):
 		time.sleep(duration)
 		write_on_frame(duty_cycle)
 
-#		if duty_cycle == min_cycle:
-#			gripper_closed = True
-#			break
-
 	
 
 	create_video()
