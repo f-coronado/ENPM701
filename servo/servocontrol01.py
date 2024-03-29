@@ -26,19 +26,19 @@ max_cycle = 9
 
 def cycle(duration):
 
-	pwm.ChangeDutyCycle(4)
+	pwm.ChangeDutyCycle(7.5)
 	ret, frame = cap.read()
-	frame4 = cv.putText(frame, "Duty: 4%", location, font, scale, white, thickness) 
+	frame7_5 = cv.putText(frame, "Duty: 7.5%", location, font, scale, white, thickness) 
 	time.sleep(duration)
 
-	pwm.ChangeDutyCycle(5)
+	pwm.ChangeDutyCycle(5.5)
 	ret, frame = cap.read()
-	frame5 = cv.putText(frame, "Duty: 5%", location, font, scale, white, thickness) 
+	frame5_5 = cv.putText(frame, "Duty: 5.5%", location, font, scale, white, thickness) 
 	time.sleep(duration)
 	
-	pwm.ChangeDutyCycle(9)
+	pwm.ChangeDutyCycle(3.5)
 	ret, frame = cap.read()
-	frame9 = cv.putText(frame, "Duty: 9%", location, font, scale, white, thickness) 
+	frame3_5 = cv.putText(frame, "Duty: 3.5%", location, font, scale, white, thickness) 
 
 def set_cycle(duty_cycle):
 	max_cycle = 9
@@ -55,6 +55,8 @@ def write_on_frame(duty_cycle):
 	scale = 1
 
 	ret, frame = cap.read()
+	frame = cv.flip(frame, 0) # flip across the horizontal axis
+
 	cv.putText(frame, "Duty: {}%".format(duty_cycle), location, font, scale, white, thickness) 
 	cv.imwrite("duty_{}.jpg".format(duty_cycle), frame)
 	
@@ -70,18 +72,18 @@ def create_video():
 
 def main(duration):
 
+	duty_list = [7.5, 5.5, 3.5, 5.5, 7.5]
 	pwm.start(min_cycle)
-	
-	for duty_cycle in range(min_cycle, max_cycle + 1):
-		set_cycle(duty_cycle)
-		time.sleep(duration)
-		write_on_frame(duty_cycle)
-	for duty_cycle in range(max_cycle - 1, min_cycle - 1, -1):
-		set_cycle(duty_cycle)
-		time.sleep(duration)
-		write_on_frame(duty_cycle)
 
-	
+	for cycle in duty_list:
+		set_cycle(cycle)
+		time.sleep(duration)
+		write_on_frame(cycle)
+#	for duty_cycle in range(max_cycle - 1, min_cycle - 1, -1):
+#		set_cycle(duty_cycle)
+#		time.sleep(duration)
+#		write_on_frame(duty_cycle)
+
 
 	create_video()
 	pwm.stop()
