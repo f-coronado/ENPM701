@@ -20,8 +20,8 @@ fps = 1
 fourcc = cv.VideoWriter_fourcc(*'XVID')
 out = cv.VideoWriter('dutyCycle.mp4', fourcc, fps, (int(cap.get(3)), int(cap.get(4))))
 
-min_cycle = 3
-max_cycle = 9
+min_cycle = 3.5
+max_cycle = 7.5
 
 
 def cycle(duration):
@@ -35,7 +35,7 @@ def cycle(duration):
 	ret, frame = cap.read()
 	frame5_5 = cv.putText(frame, "Duty: 5.5%", location, font, scale, white, thickness) 
 	time.sleep(duration)
-	
+
 	pwm.ChangeDutyCycle(3.5)
 	ret, frame = cap.read()
 	frame3_5 = cv.putText(frame, "Duty: 3.5%", location, font, scale, white, thickness) 
@@ -56,22 +56,34 @@ def write_on_frame(duty_cycle):
 
 	ret, frame = cap.read()
 	frame = cv.flip(frame, 0) # flip across the horizontal axis
-
+	print("duty_cycle to write on frame: ", duty_cycle)
 	cv.putText(frame, "Duty: {}%".format(duty_cycle), location, font, scale, white, thickness) 
 	cv.imwrite("duty_{}.jpg".format(duty_cycle), frame)
-	
-#	return frame
+
+#	return 
 
 def create_video():
-	
-	for i in range(min_cycle, max_cycle + 1):
+	i = 3.5
+	j = 7.5
+
+	while i <= 7.5:
+		i += 2
+#	for i in range(min_cycle, max_cycle + 2, 2):
+		print("i: ", i)
 		frame = cv.imread("duty_{}.jpg".format(i))
 		out.write(frame)
-	
+
+	while j >= 3.5:
+		j -= 2
+#	for j in range(max_cycle, min_cycle - 2, 2):
+		print("j: ", j)
+		frame = cv.imread("duty_{}.jpg".format(j))
+		out.write(frame)
 #	return out
 
 def main(duration):
 
+	pic_list = []
 	duty_list = [7.5, 5.5, 3.5, 5.5, 7.5]
 	pwm.start(min_cycle)
 
@@ -83,7 +95,6 @@ def main(duration):
 #		set_cycle(duty_cycle)
 #		time.sleep(duration)
 #		write_on_frame(duty_cycle)
-
 
 	create_video()
 	pwm.stop()
