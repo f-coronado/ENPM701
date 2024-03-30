@@ -24,19 +24,6 @@ gpio.setup(36, gpio.OUT) # setup gripper pin to be output
 pwm = gpio.PWM(36, 50) # initialize pwm to be 50 Hz
 pwm.start(7.5) # start PWM frequency to 5% duty cycle
 
-
-# initialize camera
-cap = cv.VideoCapture(0)
-if not cap.isOpened():
-        print("couldn't open camera")
-        exit()
-
-# define video properties
-video_file = "motor01.mp4"
-fps = 1
-fourcc = cv.VideoWriter_fourcc(*'XVID')
-out = cv.VideoWriter('motor01.mp4', fourcc, fps, (int(cap.get(3)), int(cap.get(4))))
-
 min_cycle = 3
 max_cycle = 9
 
@@ -203,9 +190,25 @@ def key_input(event):
 	else:
 		print("invalid key pressed")
 
-print("enter 'p' at any time to exit script")
+
+# initialize camera
+cap = cv.VideoCapture(0)
+if not cap.isOpened():
+        print("couldn't open camera")
+        exit()
+
+# define video properties
+video_file = "drive01.mp4"
+fps = 1
+fourcc = cv.VideoWriter_fourcc(*'XVID')
+out = cv.VideoWriter(video_file, fourcc, fps, (int(cap.get(3)), int(cap.get(4))))
+
 while True:
-	pwm.start(8)
+
+	ret, frame = cap.read()
+	frame = cv.flip(frame, -1)
+	out.write(frame)
+
 	time.sleep(1)
 	key_press = input("select driving mode: ")
 	duty_cycle = float(input("select duty cycle for servo between 3-9: "))
@@ -215,6 +218,9 @@ while True:
 	key_input(key_press)
 	key_input(duty_cycle)
 	print("distance: ", distance(), " cm\n")
+
+cap.release()
+out.release()
 
 pwm.stop()
 gpio.cleanup
