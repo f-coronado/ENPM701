@@ -3,11 +3,27 @@ import numpy as np
 import time
 import cv2 as cv
 
-# setup gpio pins and set pin 36 as output
+# define pin allocations
+trig = 16
+echo = 18
+
+# setup GPIO board and pins
 gpio.setmode(gpio.BOARD)
-gpio.setup(36, gpio.OUT)
-pwm = gpio.PWM(36, 50)
-pwm.start(3.5) # start PWM frequency to 5% duty cycle
+gpio.setup(trig, gpio.OUT)
+gpio.setup(echo, gpio.IN)
+
+gpio.setup(31, gpio.OUT) # IN1
+gpio.setup(33, gpio.OUT) # IN2
+gpio.setup(35, gpio.OUT) # IN3
+gpio.setup(37, gpio.OUT) # IN4
+
+
+# setup gpio pins and set pin 36 as output
+#gpio.setmode(gpio.BOARD)
+gpio.setup(36, gpio.OUT) # setup gripper pin to be output
+pwm = gpio.PWM(36, 50) # initialize pwm to be 50 Hz
+pwm.start(7.5) # start PWM frequency to 5% duty cycle
+
 
 # initialize camera
 cap = cv.VideoCapture(0)
@@ -26,15 +42,6 @@ max_cycle = 9
 
 
 def distance():
-
-	# define pin allocations
-	trig = 16
-	echo = 18
-
-	# setup GPIO board and pins
-	gpio.setmode(gpio.BOARD)
-	gpio.setup(trig, gpio.OUT)
-	gpio.setup(echo, gpio.IN)
 
 	# ensure output has no value
 	gpio.output(trig, False)
@@ -56,7 +63,7 @@ def distance():
 	distance = pulse_duration * 17150 # convert time to distance
 	distance = round(distance, 2)
 
-	gpio.cleanup()
+#	gpio.cleanup()
 
 	return distance
 
@@ -70,7 +77,7 @@ def init():
 
 
 def forward(tf):
-        init()
+#        init()
 
         # left wheels
         gpio.output(31, True)
@@ -84,11 +91,11 @@ def forward(tf):
         time.sleep(tf)
         # send all pins low and cleanup
         gameover()
-        gpio.cleanup()
+#        gpio.cleanup()
 
 
 def reverse(tf):
-        init()
+#        init()
 
         # left wheels
         gpio.output(31, False)
@@ -102,11 +109,11 @@ def reverse(tf):
         time.sleep(tf)
         # send all pins low and cleanup
         gameover()
-        gpio.cleanup()
+#        gpio.cleanup()
 
 
 def pivotleft(tf):
-        init()
+#        init()
 
         # left wheels
         gpio.output(31, True)
@@ -120,11 +127,11 @@ def pivotleft(tf):
         time.sleep(tf)
         # send all pins low and cleanup
         gameover()
-        gpio.cleanup()
+#        gpio.cleanup()
 
 
 def pivotright(tf):
-        init()
+#        init()
 
         # left wheels
         gpio.output(31, False)
@@ -138,7 +145,7 @@ def pivotright(tf):
         time.sleep(tf)
         # send all pins low and cleanup
         gameover()
-        gpio.cleanup()
+#        gpio.cleanup()
 
 
 def gameover():
@@ -150,15 +157,13 @@ def gameover():
 
 
 def set_cycle(duty_cycle):
-	#init()
-	gpio.setmode(gpio.BOARD)
+
 	max_cycle = 9
 	if duty_cycle > max_cycle:
 		duty_cycle = max_cycle
 	pwm.ChangeDutyCycle(duty_cycle)
 	print("setting duty cycle to: ", duty_cycle)
-#	pwm.stop()
-#	gpio.cleanup()
+	time.sleep(1)
 
 def grab(duration):
 
