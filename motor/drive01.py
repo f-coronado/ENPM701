@@ -3,11 +3,11 @@ import numpy as np
 import time
 import cv2 as cv
 
-# setup gpio pins and set pin 36 as output 
+# setup gpio pins and set pin 36 as output
 gpio.setmode(gpio.BOARD)
 gpio.setup(36, gpio.OUT)
 pwm = gpio.PWM(36, 50)
-#pwm.start(5) # start PWM frequency to 5% duty cycle
+pwm.start(3.5) # start PWM frequency to 5% duty cycle
 
 # initialize camera
 cap = cv.VideoCapture(0)
@@ -16,17 +16,17 @@ if not cap.isOpened():
         exit()
 
 # define video properties
-video_file = "dutyCycle.mp4"
+video_file = "motor01.mp4"
 fps = 1
 fourcc = cv.VideoWriter_fourcc(*'XVID')
-out = cv.VideoWriter('dutyCycle.mp4', fourcc, fps, (int(cap.get(3)), int(cap.get(4))))
+out = cv.VideoWriter('motor01.mp4', fourcc, fps, (int(cap.get(3)), int(cap.get(4))))
 
 min_cycle = 3
 max_cycle = 9
 
 
 def distance():
-	
+
 	# define pin allocations
 	trig = 16
 	echo = 18
@@ -150,23 +150,28 @@ def gameover():
 
 
 def set_cycle(duty_cycle):
+	#init()
+	gpio.setmode(gpio.BOARD)
 	max_cycle = 9
 	if duty_cycle > max_cycle:
 		duty_cycle = max_cycle
 	pwm.ChangeDutyCycle(duty_cycle)
-	#print("setting duty cycle to: ", duty_cycle)
-	time.sleep(5)
-
+	print("setting duty cycle to: ", duty_cycle)
+#	pwm.stop()
+#	gpio.cleanup()
 
 def grab(duration):
 
-	pwm.start(min_cycle)
-	for duty_cycle in range(min_cycle, max_cycle + 1):
-	        set_cycle(duty_cycle)
-	        time.sleep(duration)
-	for duty_cycle in range(max_cycle - 1, min_cycle - 1, -1):
-	        set_cycle(duty_cycle)
-	        time.sleep(duration)
+        for cycle in duty_list:
+                print("cycle is: ", cycle)
+                set_cycle(cycle)
+                write_on_frame(cycle)
+                time.sleep(duration)
+                print("sleeping...")
+
+        create_video()
+        pwm.stop()
+        gpio.cleanup()
 
 
 def key_input(event):
@@ -176,25 +181,35 @@ def key_input(event):
 	tf = 1
 
 	if key_press == 'f':
+		print("entered 'f'")
 		forward(tf)
 	elif key_press == 'b':
+		print("entered 'b'")
 		reverse(tf)
 	elif key_press == 'l':
+		print("entered 'l'")
 		pivotleft(tf)
 	elif key_press == 'r':
+		print("entered 'r'")
 		pivotright(tf)
 	elif 3 <= key_press <= 9:
+		print("entered number: ", key_press)
 		set_cycle(key_press)
 	else:
 		print("invalid key pressed")
 
+print("enter 'p' at any time to exit script")
 while True:
+	pwm.start(8)
 	time.sleep(1)
-	print("distance: ", distance(), " cm")
 	key_press = input("select driving mode: ")
-	duty_cycle = int(input("select duty cycle for servo between 3-9: "))
-	
+	duty_cycle = float(input("select duty cycle for servo between 3-9: "))
+
 	if key_press == 'p':
 		break
 	key_input(key_press)
 	key_input(duty_cycle)
+	print("distance: ", distance(), " cm\n")
+
+pwm.stop()
+gpio.cleanup
