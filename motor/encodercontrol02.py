@@ -17,7 +17,7 @@ def init():
 
 def gameover():
 
-	gpio.output(31, False)
+	gpio.output(31, False) 
 	gpio.output(33, False)
 	gpio.output(35, False)
 	gpio.output(37, False)
@@ -72,8 +72,14 @@ with open('encodercontrol02.txt', 'w') as file: # open this file in write mode
 			print("thanks for playing")
 			break
 
+x_vals = [x * 1000 for x in x_vals]
+gpio_list = [i + 1 for i in range(len(x_vals))]
 
-plt.plot(x_vals, y_vals)
+#print("x_vals: ", x_vals)
+#print("idx: ", idx)
+print("len(x_vals): ", len(x_vals))
+
+plt.plot(gpio_list, x_vals)
 plt.xlabel('GPIO input reading')
 plt.ylabel('Encoder State')
 plt.title('Motor Encoder Analysis')
