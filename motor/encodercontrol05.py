@@ -69,7 +69,8 @@ with open('encodercontrol04.txt', 'w') as file: # open this file in write mode
 	file.write("BRcnt  BR GPIO  FLcnt  FLGPIO\n") 
 
 	for i in range(0, 100000):
-#		print("counterBR: ", counterBR, "counterFL: ", counterFL, "BR state: ", gpio.input(12), "FL state: ", gpio.input(7))
+		print("i: ", i)
+		print("counterBR: ", counterBR, "counterFL: ", counterFL, "BR state: ", gpio.input(12), "FL state: ", gpio.input(7))
 		file.write(f"{counterBR}\t{gpio.input(12)}\t{counterFL}\t{gpio.input(7)}\n") # write to the file
 
 		if int(gpio.input(12)) != int(buttonBR):
@@ -86,9 +87,11 @@ with open('encodercontrol04.txt', 'w') as file: # open this file in write mode
 
 		if counterFL >= travel_ticks:
 			pwmBL.stop()
+			print("stopping FL")
 
 		if counterBR >= travel_ticks:
 			pwmFR.stop()
+			print("stopping BR")
 
 		if counterBR >= travel_ticks and counterFL >= travel_ticks:
 			gameover()
@@ -98,15 +101,26 @@ with open('encodercontrol04.txt', 'w') as file: # open this file in write mode
 #x_axis = [i + 1 for i in range(len(BR_y))]
 #BR_y = [val * 1000 for val in range(len( BR_y))]
 
+print("distance to travel is: ", travel_distance)
+print(travel_ticks, "ticks are needed to travel ", travel_distance, "m")
+
+
 print("len(BR_y): ", len(BR_y))
 print("len(BR_counter): ", len(BR_counter))
 print("len(FL_y): ", len(FL_y))
 print("len(FL_counter): ", len(FL_counter))
 
+fig1, ax1 = plt.subplots()
+ax1.plot(BR_counter, BR_y, label='BR')
+ax1.set_title('back right encoder analysis')
+ax1.set_xlabel('GPIO input reading')
+ax1.set_ylabel('encoder state')
 
-plt.plot(BR_counter, BR_y)
-plt.xlabel('GPIO input reading')
-plt.ylabel('BR Encoder State')
-plt.title('Motor Encoder Analysis')
+fig2, ax2 = plt.subplots()
+ax2.plot(FL_counter, FL_y, label='FL')
+ax2.set_title('front left encoder analysis')
+ax2.set_xlabel('GPIO input reading')
+ax2.set_ylabel('encoder state')
+
 plt.show()
 gameover()
