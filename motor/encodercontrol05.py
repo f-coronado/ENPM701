@@ -36,7 +36,7 @@ def get_tick_cnt(dist):
 
 	ticks = (dist * 120 * 8)/.2048
 
-	return ticks 
+	return ticks
 
 def add_channels(frame):
 
@@ -91,7 +91,7 @@ cap = cv.VideoCapture(0)
 fourcc = cv.VideoWriter_fourcc(*'XVID')
 today = time.strftime("%Y%m%d-%H%M%S")
 fps_out = 10
-out = cv.VideoWriter("encodercontrol05.avi", fourcc, fps_out, (640, 480), isColor=True)
+out = cv.VideoWriter("encodercontrol05.mp4", fourcc, fps_out, (640, 480), isColor=True)
 
 start_time = cv.getTickCount() / cv.getTickFrequency()
 
@@ -111,11 +111,13 @@ FL_counter = []
 
 
 start_time = cv.getTickCount() / cv.getTickFrequency()
-with open('encodercontrol04.txt', 'w') as file: # open this file in write mode
+with open('encodercontrol05.txt', 'w') as file: # open this file in write mode
 	file.write("BRcnt  BR GPIO  FLcnt  FLGPIO\n") 
 
 	for i in range(0, 100000):
-#		ret, frame = cap.read()
+
+		if i % 250 == 0:
+			ret, frame = cap.read()
 #		if not ret:
 #			print("failed to capture frame")
 #			break
