@@ -1,29 +1,30 @@
-import RPi.GPIO as gpio
+import RPi.GPIO as GPIO
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+import cv2 as cv
 
-## initialize gpio pins ##
+## initialize GPIO pins ##
 
 def init():
 
-	gpio.setmode(gpio.BOARD)
-	gpio.setup(31, gpio.OUT) # IN1
-	gpio.setup(33, gpio.OUT) # IN2
-	gpio.setup(35, gpio.OUT) # IN3
-	gpio.setup(37, gpio.OUT) # IN4
+	GPIO.setmode(GPIO.BOARD)
+	GPIO.setup(31, GPIO.OUT) # IN1
+	GPIO.setup(33, GPIO.OUT) # IN2
+	GPIO.setup(35, GPIO.OUT) # IN3
+	GPIO.setup(37, GPIO.OUT) # IN4
 
-	gpio.setup(12, gpio.IN, pull_up_down = gpio.PUD_UP)
-	gpio.setup(7, gpio.IN, pull_up_down = gpio.PUD_UP)
+	GPIO.setup(12, GPIO.IN, pull_up_down = GPIO.PUD_UP)
+	GPIO.setup(7, GPIO.IN, pull_up_down = GPIO.PUD_UP)
 
 def gameover():
 
-	gpio.output(31, False)
-	gpio.output(33, False)
-	gpio.output(35, False)
-	gpio.output(37, False)
+	GPIO.output(31, False)
+	GPIO.output(33, False)
+	GPIO.output(35, False)
+	GPIO.output(37, False)
 
-	gpio.cleanup()
+	GPIO.cleanup()
 
 def get_input():
 
@@ -36,6 +37,37 @@ def get_tick_cnt(dist):
 	ticks = (dist * 120 * 8)/.2048
 
 	return ticks 
+
+def add_channels(frame):
+
+	frame = np.expand_dims(frame, axis = -1)
+	frame = np.repeat(frame, 3, axis = -1)
+
+	return frame
+
+def detect_green(hsv_frame):
+
+	mask_video = cv.inRange(hsv_frame, lower_green, upper_green)
+	blurred_video = cv.GaussianBlur(mask_video, (5,5), 0)
+	blurred_video = add_channels(blurred_video)
+	gray_video = cv.cvtColor(blurred_video, cv.COLOR_BGR2GRAY)
+	edged_video = cv.Canny(gray_video, 40, 220)
+	contours_, hierarchy_ = cv.findContours(edged_video, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+	cv.drawContours(edged_video, contours, -1, (255, 0, 0), 2)
+
+	for contour_ in contours_:
+		M = cv.moments(contour)
+		if M['m00'] != 0:
+			cx = int(M['m10'] / M['m00'])
+			cy = int(M['m01'] / M['m00'])
+		(x, y), radius = cv.minEnclosingCircle(contour_)
+		center = (int(x), int(y))
+		radius = int(radius)
+
+		cv.circle(img, center, radius, (0, 0, 255), 2)
+		cv.circle(image, (cx, cy), 1, (0, 255, 255), 1)
+
+	return img
 
 
 ## main code ##
@@ -52,9 +84,21 @@ print("distance to travel is: ", travel_distance)
 travel_ticks = get_tick_cnt(travel_distance)
 print(travel_ticks, "ticks are needed to travel ", travel_distance, "m")
 
+# camera properties intialization
+lower_green = (29, 45, 63)
+upper_green = (72, 214, 237)
+cap = cv.VideoCapture(0)
+fourcc = cv.VideoWriter_fourcc(*'XVID')
+today = time.strftime("%Y%m%d-%H%M%S")
+fps_out = 10
+out = cv.VideoWriter("encodercontrol05.avi", fourcc, fps_out, (640, 480), isColor=True)
+
+start_time = cv.getTickCount() / cv.getTickFrequency()
+
+
 # independent motor control via pwm
-pwmBL = gpio.PWM(31, 50)
-pwmFR = gpio.PWM(37, 50)
+pwmBL = GPIO.PWM(31, 50)
+pwmFR = GPIO.PWM(37, 50)
 val = 22
 pwmBL.start(val)
 pwmFR.start(val)
@@ -65,23 +109,33 @@ FL_y = []
 BR_counter = []
 FL_counter = []
 
+
+start_time = cv.getTickCount() / cv.getTickFrequency()
 with open('encodercontrol04.txt', 'w') as file: # open this file in write mode
 	file.write("BRcnt  BR GPIO  FLcnt  FLGPIO\n") 
 
 	for i in range(0, 100000):
-		print("i: ", i)
-		print("counterBR: ", counterBR, "counterFL: ", counterFL, "BR state: ", gpio.input(12), "FL state: ", gpio.input(7))
-		file.write(f"{counterBR}\t{gpio.input(12)}\t{counterFL}\t{gpio.input(7)}\n") # write to the file
+#		ret, frame = cap.read()
+#		if not ret:
+#			print("failed to capture frame")
+#			break
+#		frame = cv.flip(frame, 0) # flip vertically
+#		cv.imshow('frame', frame)
 
-		if int(gpio.input(12)) != int(buttonBR):
-			buttonBR = int(gpio.input(12))
-			BR_y.append(gpio.input(12))
+
+		print("i: ", i)
+		print("counterBR: ", counterBR, "counterFL: ", counterFL, "BR state: ", GPIO.input(12), "FL state: ", GPIO.input(7))
+		file.write(f"{counterBR}\t{GPIO.input(12)}\t{counterFL}\t{GPIO.input(7)}\n") # write to the file
+
+		if int(GPIO.input(12)) != int(buttonBR):
+			buttonBR = int(GPIO.input(12))
+			BR_y.append(GPIO.input(12))
 			counterBR += 1
 			BR_counter.append(counterBR)
 
-		if int(gpio.input(7)) != int(buttonFL):
-			buttonFL = int(gpio.input(7))
-			FL_y.append(gpio.input(7))
+		if int(GPIO.input(7)) != int(buttonFL):
+			buttonFL = int(GPIO.input(7))
+			FL_y.append(GPIO.input(7))
 			counterFL += 1
 			FL_counter.append(counterFL)
 
@@ -94,12 +148,11 @@ with open('encodercontrol04.txt', 'w') as file: # open this file in write mode
 			print("stopping BR")
 
 		if counterBR >= travel_ticks and counterFL >= travel_ticks:
-			gameover()
+			#gameover()
 			print("thanks for playing")
 			break
 
-#x_axis = [i + 1 for i in range(len(BR_y))]
-#BR_y = [val * 1000 for val in range(len( BR_y))]
+#		out.write(frame)
 
 print("distance to travel is: ", travel_distance)
 print(travel_ticks, "ticks are needed to travel ", travel_distance, "m")
@@ -121,6 +174,12 @@ ax2.plot(FL_counter, FL_y, label='FL')
 ax2.set_title('front left encoder analysis')
 ax2.set_xlabel('GPIO input reading')
 ax2.set_ylabel('encoder state')
+
+#out.release()
+#cap.release()
+
+#cv.waitKey(0)
+#cv.destoryAllWindows()
 
 plt.show()
 gameover()

@@ -1,0 +1,10 @@
+
+HSV bounds for green that work at home:
+H_min: 029
+S_min: 045
+V_min: 063
+H_max: 072
+S_max: 214
+V_max: 237
+
+

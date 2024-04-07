@@ -170,7 +170,7 @@ def key_input(event):
 	init()
 	print("key: ", event)
 	key_press = event
-	tf = 1
+	tf = 5
 
 	if key_press == 'f':
 		print("entered 'f'")
