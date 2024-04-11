@@ -13,8 +13,8 @@ def init():
 
 def main():
 
-	localization = Localization()
 	locomotion = Locomotion()
+	localization = Localization()
 
 	ser = serial.Serial('/dev/ttyUSB0', 9600) # identify serial connection
 	cnt = 0
@@ -24,23 +24,36 @@ def main():
 
 	max_count = 2343 # ticks needed for half a meter
 	duty = 20
+	duty_turn = 80
 
 	for command in sequence:
-		if command == 'f':
-			locomotion.drive([duty, 0, 0, duty])
+		print("command: ", command)
+		cntrBR = 0
+		cntrFL = 0
+		localization.reset_tick_count()
+		while cntrBR <= max_count and cntrFL <= max_count:
 
-		if command == 'b':
-			locomotion.drive([0, duty, duty, 0])
+			if command == 'f':
+				locomotion.drive([duty, 0, 0, duty])
+				print("driving forward")
 
-		if command == 'r':
-			locomotion.drive([0, duty, 0, duty])
+			if command == 'b':
+				locomotion.drive([0, duty, duty, 0])
+				print("driving in reverse")
 
-		if command == 'l':
-			locomotion.drive([duty, 0, duty, 0])
+			if command =='l':
+				locomotion.drive([0, duty_turn, 0, duty_turn])
+				print("pivoting left")
 
-		cntrBR, cntrFL = localization.get_tick_count()
-		if cntrBR and cntrFL >= max_count:
-			locomoution.gameover()
+			if command == 'r':
+				locomotion.drive([duty_turn, 0, duty_turn, 0])
+				print("pivoting right")
+
+			cntrBR, cntrFL = localization.get_tick_count()
+			print("cntrBR, cntrFL: ", cntrBR, cntrFL)
+			if cntrBR and cntrFL >= max_count:
+				locomotion.gameover()
+				break
 
 if __name__ == "__main__":
 	main()

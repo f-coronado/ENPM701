@@ -7,21 +7,30 @@ class Localization:
 		self.BR_encoder_cnt = []
 		self.counterBR = 0
 		self.counterFL = 0
-		self.priorFL = None
-		self.priorBR = None
+		self.priorFL = 5
+		self.priorBR = 5
+#		GPIO.setmode(GPIO.BOARD)
+#		GPIO.setup(12, GPIO.IN, pull_up_down = GPIO.PUD_UP)
+#		GPIO.setup(7, GPIO.IN, pull_up_down = GPIO.PUD_UP)
 
 	def get_tick_count(self):
-		if int(GPIO.input(12)) != int(priorBR):
+		if int(GPIO.input(12)) != int(self.priorBR):
 			self.priorBR = int(GPIO.input(12))
 			self.BR_encoder_cnt.append(GPIO.input(12))
-			counterBR += 1
+			self.counterBR += 1
 
-		if int(GPIO.input(7)) != int(priorFL):
+		if int(GPIO.input(7)) != int(self.priorFL):
 			self.priorFL = int(GPIO.input(7))
 			self.FL_encoder_cnt.append(GPIO.input(7))
-			counterFL += 1
+			self.counterFL += 1
 
 		return self.counterBR, self.counterBR
+
+	def reset_tick_count(self):
+		self.counterBR = 0
+		self.counterFL = 0
+		self.priorFL = 0
+		self.priorBR = 0
 
 	def get_angle_imu(self, cnt, serial):
 
