@@ -4,9 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 from libraries.perception import Perception
+from libraries.localization import Localization
+from libraries.locomotion import Locomotion
 
 def main():
 	perception = Perception()
+	localization = Localization()
+	locomotion = Locomotion()
 
 	# initialize video parameters
 	cap = cv.VideoCapture(0)
