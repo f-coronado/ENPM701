@@ -48,6 +48,7 @@ def main():
 
 			elif command =='l':
 				locomotion.drive([0, duty_turn, 0, duty_turn])
+				left_turn_ticks = 
 #				print("pivoting left")
 
 			elif command == 'r':
@@ -62,6 +63,10 @@ def main():
 				locomotion.gameover()
 				avg_tick = (cntrBR + cntrFL) / 2
 				print("avg_tick: ", avg_tick)
+				current_angle = localization.ticks_2_angle(avg_tick)
+				print("current angle: ", current_angle)
+
+
 				if command == 'f' or command == 'b':
 					distance = localization.tick_2_distance(avg_tick)
 					print("distance travelled: ", distance)

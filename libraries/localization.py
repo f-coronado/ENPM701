@@ -10,6 +10,12 @@ class Localization:
 		self.counterFL = 0
 		self.priorFL = 5
 		self.priorBR = 5
+:
+		R = .018 # track width, double check this
+		C = .204204 # wheel circumference in meters
+		gear_ratio = 1/120
+		tick_per_mtr_rev = 8
+
 #		GPIO.setmode(GPIO.BOARD)
 #		GPIO.setup(12, GPIO.IN, pull_up_down = GPIO.PUD_UP)
 #		GPIO.setup(7, GPIO.IN, pull_up_down = GPIO.PUD_UP)
@@ -37,15 +43,25 @@ class Localization:
 		distance = ticks / 4687 # distance in meters, there are 4687 ticks/m
 		return distance
 
-	def get_enc_pos(self, x, y, distance):
+	def angle_2_ticks(self, angle)
+
+		ticks = angle * self.R * (1/self.C) * self.gear_ratio * self.tick_per_mtr_rev
+		return ticks
+
+	def ticks_2_angle(self, ticks):
+		
+		angle = ticks * (1/self.ticks_per_mtr_rev) * (1/self.gear_ratio) * self.C * (1/self.R)
+		return angle
+
+	def update_enc_pos(self, x, y, distance, angle):
 		x += distance * math.cos(math.radians(angle))
 		y += distance * math.sin(math.radians(angle))
 
 		return x, y
 
-	def get_enc_angle(self):
+	def update_enc_angle(self, ticks, angle):
 		angle = 0
-
+		
 
 
 	def get_angle_imu(self, cnt, serial):
