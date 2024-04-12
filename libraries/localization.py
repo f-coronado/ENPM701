@@ -1,4 +1,5 @@
 import RPi.GPIO as GPIO
+import math
 
 class Localization:
 
@@ -31,6 +32,21 @@ class Localization:
 		self.counterFL = 0
 		self.priorFL = 0
 		self.priorBR = 0
+
+	def tick_2_distance(self, ticks):
+		distance = ticks / 4687 # distance in meters, there are 4687 ticks/m
+		return distance
+
+	def get_enc_pos(self, x, y, distance):
+		x += distance * math.cos(math.radians(angle))
+		y += distance * math.sin(math.radians(angle))
+
+		return x, y
+
+	def get_enc_angle(self):
+		angle = 0
+
+
 
 	def get_angle_imu(self, cnt, serial):
 
