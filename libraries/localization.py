@@ -10,11 +10,19 @@ class Localization:
 		self.counterFL = 0
 		self.priorFL = 5
 		self.priorBR = 5
-:
-		R = .018 # track width, double check this
-		C = .204204 # wheel circumference in meters
-		gear_ratio = 1/120
-		tick_per_mtr_rev = 8
+		self.positions = []
+
+		# initialize x and y to be at center of landing zone
+		self.x = 2 * .3028
+		self.y = 2 * .3028
+		self.angle = 0
+		self.x_pos = [self.x]
+		self.y_pos = [self.y]
+
+		self.R = .018 # track width, double check this
+		self.C = .204204 # wheel circumference in meters
+		self.gear_ratio = 1/120
+		self.ticks_per_mtr_rev = 8
 
 #		GPIO.setmode(GPIO.BOARD)
 #		GPIO.setup(12, GPIO.IN, pull_up_down = GPIO.PUD_UP)
@@ -38,30 +46,39 @@ class Localization:
 		self.counterFL = 0
 		self.priorFL = 0
 		self.priorBR = 0
+		return self.counterBR, self.counterFL
 
 	def tick_2_distance(self, ticks):
 		distance = ticks / 4687 # distance in meters, there are 4687 ticks/m
 		return distance
 
-	def angle_2_ticks(self, angle)
+	def angle_2_ticks(self, angle):
 
-		ticks = angle * self.R * (1/self.C) * self.gear_ratio * self.tick_per_mtr_rev
+		ticks = angle * self.R * (1/self.C) * 1/self.gear_ratio * self.tick_per_mtr_rev
 		return ticks
 
 	def ticks_2_angle(self, ticks):
-		
-		angle = ticks * (1/self.ticks_per_mtr_rev) * (1/self.gear_ratio) * self.C * (1/self.R)
+
+		angle = ticks * (1/self.ticks_per_mtr_rev) * self.gear_ratio * self.C * (1/self.R)
 		return angle
 
-	def update_enc_pos(self, x, y, distance, angle):
-		x += distance * math.cos(math.radians(angle))
-		y += distance * math.sin(math.radians(angle))
+	def update_enc_pos(self, distance): # update angles then append for plotting
+		self.x += distance * math.cos(self.angle)
+		self.x_pos.append(self.x)
+		self.y += distance * math.sin(self.angle)
+		self.y_pos.append(self.y)
 
-		return x, y
+		return self.x, self.y
 
-	def update_enc_angle(self, ticks, angle):
-		angle = 0
-		
+	def update_enc_angle(self, theta, turn):
+		print("self.angle = ", self.angle)
+		if turn == 'l':
+			self.angle += theta # in radians
+		if turn == 'r':
+			self.angle -= theta
+		if turn == 'f' or turn == 'b':
+			return
+#		return self.angle
 
 
 	def get_angle_imu(self, cnt, serial):
