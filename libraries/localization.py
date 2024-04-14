@@ -1,5 +1,7 @@
 import RPi.GPIO as GPIO
 import math
+import serial
+import time
 
 class Localization:
 
@@ -12,6 +14,7 @@ class Localization:
 		self.priorBR = 5
 		self.positions = []
 
+		# intialize encoder pose
 		# initialize x and y to be at center of landing zone
 		self.x = 2 * .3028
 		self.y = 2 * .3028
@@ -19,6 +22,13 @@ class Localization:
 		self.x_pos = [self.x]
 		self.y_pos = [self.y]
 
+		# intialize imu pose
+		self.x_imu = []
+		self.y_imu = []
+		self.z_imu = []
+		self.ser = serial.Serial('/dev/ttyUSB0', 9600) # identify serial connection
+
+		# robot characteristics
 		self.R = .018 # track width, double check this
 		self.C = .204204 # wheel circumference in meters
 		self.gear_ratio = 1/120
@@ -78,29 +88,27 @@ class Localization:
 			self.angle -= theta
 		if turn == 'f' or turn == 'b':
 			return
-#		return self.angle
+
+	def get_imu_coords(self, ser, cnt):
+
+		while True:
+			print("ser: ", ser.in_waiting)
+			if (ser.in_waiting > 0):
+				cnt += 1
+#				try:
+				line = self.ser.readline().decode('utf-8', errors='ignore')
+#				except UnicodeDecodeError:
+#					continue
+
+				if cnt > 10:
+					values = line.split('\t')
+					x = float(values[0].split(':')[1])
+					y = float(values[1].split(':')[1])
+					z = float(values[2].split(':')[1])
+					self.x_imu.append(x)
+					self.y_imu.append(y)
+					self.z_imu.append(z)
+					break
 
 
-	def get_angle_imu(self, cnt, serial):
-
-		if (ser.in_waiting > 0):
-			cnt += 1
-			line = ser.readline()
-			print(line)
-
-			if cnt > 10: # avoid first 10 lines of serial connection
-
-				# strip serial stream of extra characters
-				line = line.rstrip().lstrip()
-				print(line)
-
-				line = str(line)
-				line = line.strip("'")
-				line = line.strip("b'")
-				print(line)
-
-				line = float(line)
-				angle = float(line)
-				print(line, "\n")
-
-			return cnt, angle
+		return x, y, z
