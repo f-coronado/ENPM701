@@ -5,14 +5,16 @@ import time
 
 class Perception:
 
+	def __init__(self):
+		self.angle_2_center = 10000
+
 	def add_channels(self, frame):
 		frame = np.expand_dims(frame, axis = -1)
 		frame = np.repeat(frame, 3, axis = -1)
 		return frame
 
-	def get_center_distance(self, cx):
-		angle = (cx - 320) * .061
-		return angle
+	def get_angle2center(self, cx):
+		self.angle_2_center = int((cx - 320) * .061)
 
 	def detect_color(self, hsv_frame, lower_hsv, upper_hsv):
 		mask_video = cv.inRange(hsv_frame, lower_hsv, upper_hsv)

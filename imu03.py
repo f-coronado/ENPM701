@@ -42,11 +42,12 @@ def main():
 			while cntrBR <= turn_count and cntrFL <= turn_count:
 				if command == 'l':
 					locomotion.drive([0, duty_turn, 0, duty_turn])
-					#print("cntrBR: ", cntrBR, "cntrFL: ", cntrFL)
+					print("cntrBR, cntrFL: ", cntrBR, cntrFL)
+
 
 				elif command == 'r':
 					locomotion.drive([duty_turn, 0, duty_turn, 0])
-					#print("cntrBR: ", cntrBR, "cntrFL: ", cntrFL)
+					print("cntrBR: ", cntrBR, "cntrFL: ", cntrFL)
 
 				cntrBR, cntrFL = localization.get_tick_count()
 				if cntrBR and cntrFL >= turn_count:
@@ -66,8 +67,13 @@ def main():
 
 				if command == 'f':
 					locomotion.drive([duty, 0, 0, duty])
+					print("driving forward")
+					print("cntrBR: ", cntrBR, "cntrFL: ", cntrFL)
+
 				elif command == 'b':
 					locomotion.drive([0, duty, duty, 0])
+					print("driving forward")
+					print("cntrBR: ", cntrBR, "cntrFL: ", cntrFL)
 
 				cntrBR, cntrFL = localization.get_tick_count()
 				if cntrBR and cntrFL >= max_count:
@@ -96,6 +102,8 @@ def main():
 
 	print("\ncommand sequence: ", sequence)
 	print("distances travelled: ", enc_distances)
+
+	localization.gamover()
 
 	enc_positions =list(zip(localization.x_pos, localization.y_pos))
 	print("enc_positions: ", enc_positions)

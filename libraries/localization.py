@@ -92,19 +92,36 @@ class Localization:
 	def get_imu_coords(self, ser, cnt):
 
 		while True:
-			print("ser: ", ser.in_waiting)
+			#print("ser: ", ser.in_waiting)
 			if (ser.in_waiting > 0):
 				cnt += 1
-#				try:
-				line = self.ser.readline().decode('utf-8', errors='ignore')
-#				except UnicodeDecodeError:
-#					continue
+				line = self.ser.readline()
+				print(line)
 
 				if cnt > 10:
-					values = line.split('\t')
-					x = float(values[0].split(':')[1])
-					y = float(values[1].split(':')[1])
-					z = float(values[2].split(':')[1])
+					print("cnt > 10")
+					print("before stripping")
+					line = line.rstrip().lstrip()
+					print(line)
+
+					line = str(line)
+					line = line.strip("'")
+					line.strip("b'")
+					print("after stripping")
+					print(line)
+
+					values = line.split()
+					print("values: ", values)
+					values = values[1:]
+					values[0] = values[1][:-5]
+					values[1] = values[1][:-5]
+					print("values: ", values)
+					x = float(values[0])
+					y = float(values[1])
+					z = float(values[2])
+
+					print("X:", x, "\tY:", y, "\tZ:", z, "\n")
+
 					self.x_imu.append(x)
 					self.y_imu.append(y)
 					self.z_imu.append(z)

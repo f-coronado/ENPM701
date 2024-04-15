@@ -16,6 +16,11 @@ class Locomotion:
 			pwm_object.start(0) # start each pin with duty cycle of 0
 
 	def drive(self, duty_cycle):
+	# To drive forward: pins 31 and 37 true, pins 33 and 35 false
+	# To drive in reverse: pins 31 and 37 false, pins 33 and 35 true
+	# To pivot left: Pins 33 and 37 true, Pins 31 and 35 false
+	# To pivot right: Pins 31 and 35 true, Pins 33 and 37 false
+	# format is [31, 33, 35, 37]
 		for pwm_object, duty in zip(self.pwm_obj, duty_cycle):
 			pwm_object.ChangeDutyCycle(duty)
 
