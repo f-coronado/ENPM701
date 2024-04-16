@@ -12,6 +12,7 @@ if not ret:
 	print("could not capture frame")
 	exit()
 
+frame = cv.flip(frame, -1)
 cv.imshow("captured image", frame)
 
 while True:
@@ -20,6 +21,5 @@ while True:
 
 cap.release()
 cv.destroyAllWindows()
-
 cv.imwrite("test_pic.jpg", frame)
 

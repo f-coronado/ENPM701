@@ -13,9 +13,9 @@ class Locomotion:
 		GPIO.setup(12, GPIO.IN, pull_up_down = GPIO.PUD_UP) # setup BR encoder
 		GPIO.setup(7, GPIO.IN, pull_up_down = GPIO.PUD_UP) # setup FL encoder
 
-		GPIO.setup(36, GPIO.out)
-		gripper_pwm = GPIO.PWM(36, 50) # setup pin 36 with 50Hz 
-		gripper_pwm.start(3.5) # start gripper in closed position
+		#GPIO.setup(36, GPIO.out)
+		#gripper_pwm = GPIO.PWM(36, 50) # setup pin 36 with 50Hz 
+		#gripper_pwm.start(3.5) # start gripper in closed position
 
 		for pwm_object in self.pwm_obj:
 			pwm_object.start(0) # start each pin with duty cycle of 0

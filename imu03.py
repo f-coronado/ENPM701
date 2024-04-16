@@ -54,7 +54,7 @@ def main():
 	max_count = 2343 # ticks needed for half a meter
 	turn_count = 975 # ticks needed for about 90 degrees
 	duty = 40
-	duty_turn = 80
+	duty_turn = 100
 	enc_distances = []
 	total_distance = 0
 
@@ -77,7 +77,7 @@ def main():
 					print("cntrBR: ", cntrBR, "cntrFL: ", cntrFL)
 
 				cntrBR, cntrFL = localization.get_tick_count()
-				if cntrBR and cntrFL >= turn_count:
+				if (cntrBR >= turn_count and cntrFL >= turn_count) or (localization.d_angle) >= 90:
 					theta = 1.5707 # 90 degrees in radians
 					localization.update_enc_angle(theta, command)
 					locomotion.gameover()
