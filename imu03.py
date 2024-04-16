@@ -5,13 +5,40 @@ from libraries.locomotion import Locomotion
 import matplotlib.pyplot as plt
 import time
 
-def init():
+def get_imu_coords(ser, cnt):
+	while True:
+		#print("ser: ", ser.in_waiting)
+		if (ser.in_waiting > 0):
+			cnt += 1
+			line = ser.readline()
+			print(line)
 
-        gpio.setmode(gpio.BOARD)
-        gpio.setup(31, gpio.OUT) # IN1
-        gpio.setup(33, gpio.OUT) # IN2
-        gpio.setup(35, gpio.OUT) # IN3
-        gpio.setup(37, gpio.OUT) # IN4
+		if cnt > 10:
+			#print("cnt > 10")
+			#print("before stripping")
+			line = line.rstrip().lstrip()
+			print(line)
+
+			line = str(line)
+			line = line.strip("'")
+			line.strip("b'")
+			#print("after stripping")
+			print(line)
+
+			values = line.split()
+			#print("values: ", values)
+			values = values[1:]
+			values[0] = values[0][:-5]
+			values[1] = values[1][:-5]
+			#print("values: ", values)
+			x = float(values[0])
+			y = float(values[1])
+			z = float(values[2])
+			print("X:", x, "Y:", y, "Z:", z)
+
+			return x, y, z
+
+
 
 def main():
 
@@ -19,7 +46,7 @@ def main():
 	localization = Localization()
 	ser = serial.Serial('/dev/ttyUSB0', 9600) # identify serial connection
 	cnt = 0
-	time.sleep(4)
+	time.sleep(2)
 
 	sequence = input("Enter a sequence of commands separated by spaces. \nAvailable commands are: f, b, r, l:\n").split()
 	print("the sequence of commands entered was: \n", sequence)
@@ -27,7 +54,7 @@ def main():
 	max_count = 2343 # ticks needed for half a meter
 	turn_count = 975 # ticks needed for about 90 degrees
 	duty = 40
-	duty_turn = 100
+	duty_turn = 80
 	enc_distances = []
 	total_distance = 0
 
@@ -57,7 +84,11 @@ def main():
 					print("cntrBR: ", cntrBR, "cntrFL: ", cntrFL)
 					avg_tick = (cntrBR + cntrFL) / 2
 					print("current encoder angle: ", localization.angle)
-					print("imu coords: ", localization.get_imu_coords(ser, cnt))
+
+					x, y, z = get_imu_coords(ser, cnt)
+					localization.x_imu.append(x)
+					localization.y_imu.append(y)
+					localization.z_imu.append(z)
 					cntrBR, cntrFL = localization.reset_tick_count()
 					break
 
@@ -90,7 +121,11 @@ def main():
 						enc_distances.append(distance)
 						localization.update_enc_angle(0, command)
 						print("current encoder angle is: ", localization.angle)
-						print("imu coords: ", localization.get_imu_coords(ser, cnt))
+
+						x, y, z = get_imu_coords(ser, cnt)
+						localization.x_imu.append(x)
+						localization.y_imu.append(y)
+						localization.z_imu.append(z)
 						localization.update_enc_pos(distance)
 						print("current position is at: ", localization.x, localization.y)
 						counterBR, counterFL = localization.reset_tick_count()
@@ -103,7 +138,7 @@ def main():
 	print("\ncommand sequence: ", sequence)
 	print("distances travelled: ", enc_distances)
 
-	localization.gamover()
+	locomotion.gameover()
 
 	enc_positions =list(zip(localization.x_pos, localization.y_pos))
 	print("enc_positions: ", enc_positions)

@@ -1,4 +1,5 @@
 import RPi.GPIO as GPIO
+import time
 
 class Locomotion:
 
@@ -12,6 +13,10 @@ class Locomotion:
 		GPIO.setup(12, GPIO.IN, pull_up_down = GPIO.PUD_UP) # setup BR encoder
 		GPIO.setup(7, GPIO.IN, pull_up_down = GPIO.PUD_UP) # setup FL encoder
 
+		GPIO.setup(36, GPIO.out)
+		gripper_pwm = GPIO.PWM(36, 50) # setup pin 36 with 50Hz 
+		gripper_pwm.start(3.5) # start gripper in closed position
+
 		for pwm_object in self.pwm_obj:
 			pwm_object.start(0) # start each pin with duty cycle of 0
 
@@ -24,13 +29,28 @@ class Locomotion:
 		for pwm_object, duty in zip(self.pwm_obj, duty_cycle):
 			pwm_object.ChangeDutyCycle(duty)
 
+	def grip(self, position):
+	# 3.5 = close, 5.5 = half, 7.5 = open
+		if position == "open":
+			print("opening gripper")
+			pwm.ChangeDutyCycle(7.5)
+		if position == "half":
+			print("half opening gripper")
+			pwm.ChangeDutyCycle(5.5)
+		if position == "close":
+			print("closing gripper")
+			pwm.ChangeDutyCycle(3.5)
+
+
 
 	def gameover(self):
 
-	        GPIO.output(31, False)
-	        GPIO.output(33, False)
-	        GPIO.output(35, False)
-	        GPIO.output(37, False)
+		print("stopping ... ")
+		GPIO.output(31, False)
+		GPIO.output(33, False)
+		GPIO.output(35, False)
+		GPIO.output(37, False)
+		time.sleep(2)
 
 #	        GPIO.cleanup()
 

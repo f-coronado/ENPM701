@@ -22,7 +22,7 @@ class Localization:
 		self.x_pos = [self.x]
 		self.y_pos = [self.y]
 
-		# intialize imu pose
+		# intialize imu angles
 		self.x_imu = []
 		self.y_imu = []
 		self.z_imu = []
@@ -89,7 +89,7 @@ class Localization:
 		if turn == 'f' or turn == 'b':
 			return
 
-	def get_imu_coords(self, ser, cnt):
+	def get_imu_angle(self, ser, cnt):
 
 		while True:
 			#print("ser: ", ser.in_waiting)
@@ -99,28 +99,28 @@ class Localization:
 				print(line)
 
 				if cnt > 10:
-					print("cnt > 10")
-					print("before stripping")
+#					print("cnt > 10")
+#					print("before stripping")
 					line = line.rstrip().lstrip()
 					print(line)
 
 					line = str(line)
 					line = line.strip("'")
 					line.strip("b'")
-					print("after stripping")
+#					print("after stripping")
 					print(line)
 
 					values = line.split()
-					print("values: ", values)
+					print("values before reassigning: ", values)
 					values = values[1:]
-					values[0] = values[1][:-5]
+					values[0] = values[0][:-5]
 					values[1] = values[1][:-5]
-					print("values: ", values)
+					print("values after reassinging: ", values)
 					x = float(values[0])
 					y = float(values[1])
 					z = float(values[2])
 
-					print("X:", x, "\tY:", y, "\tZ:", z, "\n")
+					print("X:", x, "Y:", y, "Z:", z)
 
 					self.x_imu.append(x)
 					self.y_imu.append(y)
@@ -128,4 +128,4 @@ class Localization:
 					break
 
 
-		return x, y, z
+		return x

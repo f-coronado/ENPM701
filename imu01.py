@@ -27,11 +27,12 @@ while True:
 #			print(line, "\n")
 
 			values = line.split()
-			print("values: ", values)
+			print("values before reassigning: ", values)
 			values = values[1:]
-			values[0] = values[1][:-5]
+			print("values[1:]", values)
+			values[0] = values[0][:-5]
 			values[1] = values[1][:-5]
-			print("values: ", values)
+			print("values after reassigning: ", values)
 			x = float(values[0])
 			y = float(values[1])
 			z = float(values[2])
