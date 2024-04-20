@@ -49,19 +49,22 @@ def main():
 		perception.get_angle2center(cx)
 #		print('block is ', perception.angle_2_center, 'degrees from the center')
 
-		dutyturn = 100
+		dutyturn = 70
 
 		if perception.angle_2_center >= 0 and abs(perception.angle_2_center) >= 5:
 			locomotion.drive([dutyturn, 0, dutyturn, 0])
 			print("turning right")
 			cv.putText(frame, 'turning right, block is' + str(perception.angle_2_center) + 'degrees from the center', (100, 400), font, 1, white, 2)
-		else if perception.angle_2_center <= 0 and abs(perception.angle_2_center) >= 5:
+
+		elif perception.angle_2_center <= 0 and abs(perception.angle_2_center) >= 5:
 			locomotion.drive([0, dutyturn, 0, dutyturn])
 			cv.putText(frame, 'turning left, block is' + str(perception.angle_2_center) + 'degrees from the center', (100, 400), font, 1, white, 2)
 			print("turning left")
-
 		else:
-			locomotion.drive([40, 0, 0, 40])
+			locomotion.gameover()
+
+#		else:
+#			locomotion.drive([40, 0, 0, 40])
 
 			#if perception.object_size >= xx:
 				#locomotion.gameover()

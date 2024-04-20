@@ -10,6 +10,7 @@ class Perception:
 		self.white = (255, 255, 255)
 		self.black = (0, 0, 0)
 		self.font = cv.FONT_HERSHEY_SIMPLEX
+		self.white = (255, 255, 255)
 
 	def add_channels(self, frame):
 		frame = np.expand_dims(frame, axis = -1)
@@ -50,7 +51,7 @@ class Perception:
 			radius = int(radius)
 
 			cv.circle(bgr_frame, center, radius, (0, 0, 255), 2)
-			cv.putText(bgr_frame, 'circle radius is' + str(radius), (100, 100), self.font, 1, white, 1)
+			cv.putText(bgr_frame, 'circle radius is' + str(radius), (100, 100), self.font, 1, self.white, 1)
 
 		return bgr_frame, cx, cy
 

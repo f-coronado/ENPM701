@@ -28,7 +28,7 @@ class Localization:
 		self.z_imu = []
 		self.prior_imu_angle = 0 # the direction where the robot is pointed initially is 0 degrees
 		self.imu_angle = 0
-		self.d_angle = self.imu_angle - prior_imu_angle
+		self.d_angle = self.imu_angle - self.prior_imu_angle
 
 		self.ser = serial.Serial('/dev/ttyUSB0', 9600) # identify serial connection
 
