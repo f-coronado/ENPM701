@@ -1,40 +1,12 @@
 import serial
+from libraries.localization import Localization
 
-ser = serial.Serial('/dev/ttyUSB0', 9600) # identify serial connection
-cnt = 0
+def main():
 
-while True:
+	ser = serial.Serial('/dev/ttyUSB0', 9600) # identify serial connection
+	cnt = 0
+	localization = Localization()
+	localization.get_imu_angle(ser, cnt)
 
-	if (ser.in_waiting > 0):
-		cnt += 1
-		line = ser.readline()
-		print(line)
-
-		if cnt > 10: # avoid first 10 lines of serial connection
-			print("cnt is > 10")
-			# strip serial stream of extra characters
-			print("before stripping")
-			line = line.rstrip().lstrip()
-			print(line)
-
-			line = str(line)
-			line = line.strip("'") # remove ' from end of line
-			line = line.strip("b'") # remove b' from beginning of line
-			print("after stripping")
-			print(line)
-
-#			line = float(line)
-#			print(line, "\n")
-
-			values = line.split()
-			print("values before reassigning: ", values)
-			values = values[1:]
-			print("values[1:]", values)
-			values[0] = values[0][:-5]
-			values[1] = values[1][:-5]
-			print("values after reassigning: ", values)
-			x = float(values[0])
-			y = float(values[1])
-			z = float(values[2])
-
-			print("X:", x, "\tY:", y, "\tZ:", z, "\n")
+if __name__ == "__main__":
+	main()

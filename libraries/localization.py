@@ -2,6 +2,15 @@ import RPi.GPIO as GPIO
 import math
 import serial
 import time
+import os
+from datetime import datetime
+import smtplib
+from smtplib import SMTP
+from smtplib import SMTPException
+import email
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 
 class Localization:
 
@@ -28,7 +37,7 @@ class Localization:
 		self.z_imu = []
 		self.prior_imu_angle = 0 # the direction where the robot is pointed initially is 0 degrees
 		self.imu_angle = 0
-		self.d_angle = self.imu_angle - prior_imu_angle
+		self.d_angle = 0
 
 		self.ser = serial.Serial('/dev/ttyUSB0', 9600) # identify serial connection
 
@@ -96,40 +105,90 @@ class Localization:
 	def get_imu_angle(self, ser, cnt):
 
 		while True:
-			#print("ser: ", ser.in_waiting)
 			if (ser.in_waiting > 0):
 				cnt += 1
 				line = self.ser.readline()
-				print(line)
+#				print(line)
 
 				if cnt > 10:
-#					print("cnt > 10")
-#					print("before stripping")
 					line = line.rstrip().lstrip()
-					print(line)
+#					print(line)
 
 					line = str(line)
 					line = line.strip("'")
 					line.strip("b'")
-#					print("after stripping")
-					print(line)
+#					print(line)
 
 					values = line.split()
-					print("values before reassigning: ", values)
+#					print("values before reassigning: ", values)
 					values = values[1:]
 					values[0] = values[0][:-5]
 					values[1] = values[1][:-5]
-					print("values after reassinging: ", values)
+#					print("values after reassinging: ", values)
 					x = float(values[0])
 					y = float(values[1])
 					z = float(values[2])
+					if (x >= 180):
+						#print("x>180")
+						angle = x - 360
+						#print("adjusted x to: ", angle)
+					else:
+						angle = x
 
-					print("X:", x, "Y:", y, "Z:", z)
+					self.imu_angle = angle
+#					print("X:", x, "Y:", y, "Z:", z)
 
 					self.x_imu.append(x)
-					self.y_imu.append(y)
-					self.z_imu.append(z)
+#					self.y_imu.append(y)
+#					self.z_imu.append(z)
 					break
 
+#		print("get_imu_angle()=", angle)
+		return angle
 
-		return x
+	def email(self):
+		# define timestamp and record a image
+		pic_time = datetime.now().strftime('%Y%m%d%H%M%S')
+		command = 'raspistill -w 1280 -h 720 -vf -hf -o ' + pic_time + '.jpg'
+		os.system(command)
+
+		# email info
+		smtpUser = 'fabrizzio.enpm701@gmail.com'
+		#smtpPass = 'jaw7-bold-imply'
+		smtpPass = 'xshy vmsi btcw swvo'
+
+		# destination email info
+		toAdd = ['ENPM809TS19@gmail.com', 'jsuriya@umd.edu']
+		fromAdd = smtpUser
+		subject = 'image recorded at ' + pic_time
+		msg = MIMEMultipart()
+		msg['Subject'] = subject
+		msg['From'] = fromAdd
+		#msg['To'] = toAdd
+		msg['To'] = ",".join(toAdd)
+		msg.preamble = 'Image recorded at ' + pic_time
+
+		# email text
+		body = MIMEText("image recorded at " + pic_time)
+		msg.attach(body)
+
+		# attach image
+		fp = open(pic_time + '.jpg', 'rb')
+		img = MIMEImage(fp.read())
+		fp.close()
+		msg.attach(img)
+
+		# send email
+		s = smtplib.SMTP('smtp.gmail.com', 587)
+		s.ehlo()
+		s.starttls()
+		s.ehlo()
+
+		s.login(smtpUser, smtpPass)
+		s.sendmail(fromAdd, toAdd, msg.as_string())
+		s.quit()
+
+		print("email delivered")
+
+
+
