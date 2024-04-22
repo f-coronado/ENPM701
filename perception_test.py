@@ -12,7 +12,7 @@ def main():
 	fps = cap.get(cv.CAP_PROP_FPS)
 	width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
 	height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
-	fourcc = cv.VideoWriter_fourcc(*'MJPG')
+	fourcc = cv.VideoWriter_fourcc(*'mp4v')
 	out = cv.VideoWriter("perception_test.mp4", fourcc, fps, (width, height))
 	out_edged = cv.VideoWriter("perception_test_edged.mp4", fourcc, fps, (width, height))
 	out_contoured = cv.VideoWriter("perception_test_contour.mp4", fourcc, fps, (width, height))
@@ -24,7 +24,7 @@ def main():
 			break
 		edged_frame = perception.detect_color(frame, "green")
 		out_edged.write(edged_frame)
-		frame, cx, cy, edged_contour= perception.detect_contours(edged_frame, frame)
+		frame, cx, cy, edged_contour, w, h = perception.detect_contours(edged_frame, frame)
 		out.write(frame)
 		out_contoured.write(edged_contour)
 	out.release()

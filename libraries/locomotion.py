@@ -1,5 +1,6 @@
 import RPi.GPIO as GPIO
 import time
+from .perception import Perception
 
 class Locomotion:
 
@@ -14,11 +15,17 @@ class Locomotion:
 		GPIO.setup(7, GPIO.IN, pull_up_down = GPIO.PUD_UP) # setup FL encoder
 
 		#GPIO.setup(36, GPIO.out)
-		#gripper_pwm = GPIO.PWM(36, 50) # setup pin 36 with 50Hz 
+		#gripper_pwm = GPIO.PWM(36, 50) # setup pin 36 with 50Hz
 		#gripper_pwm.start(3.5) # start gripper in closed position
+
+		self.duty = 80
+		self.duty_turn = 60
 
 		for pwm_object in self.pwm_obj:
 			pwm_object.start(0) # start each pin with duty cycle of 0
+
+		self.perception = Perception()
+
 
 	def drive(self, duty_cycle):
 	# To drive forward: pins 31 and 37 true, pins 33 and 35 false
@@ -41,6 +48,17 @@ class Locomotion:
 			print("closing gripper")
 			pwm.ChangeDutyCycle(3.5)
 
+
+	def get_object(self, cap, color, frame):
+
+		edged_frame = self.perception.detect_color(frame, color)
+		frame, cx, cy, edged_frame, w, h = self.perception.detect_contours(edged_frame, frame)
+
+		if self.perception.object_check(w, h) is True:
+			grip("open") # open before we drive object into gripper opening
+			for i in range(10):
+				self.drive([duty, 0, 0, duty]) # drive to grab object
+			grip("closed")
 
 
 	def gameover(self):

@@ -11,8 +11,8 @@ class Perception:
 		self.white = (255, 255, 255)
 		self.black = (0, 0, 0)
 		self.font = cv.FONT_HERSHEY_SIMPLEX
-		self.green_lower = (38, 61, 176) # values for home 4/21
-		self.green_upper = (237, 188, 255) # values for home 4/21
+		self.green_lower = (38, 45, 95) # values for home 4/21
+		self.green_upper = (65, 220, 255) # values for home 4/21
 		self.blue_lower = (72, 46, 64) # values from session1
 		self.blue_upper = (152, 178, 220) # values from session1
 		self.red_lower = (167, 69, 141) # values from session1
@@ -51,7 +51,6 @@ class Perception:
 		return edged_video
 
 	def detect_contours(self, edged_frame, bgr_frame):
-#		start = time.time()
 
 		contours_, hierarchy_ = cv.findContours(edged_frame, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 		cv.drawContours(bgr_frame, contours_, -1, (255, 0, 0), 2) # not sure if i need this
@@ -59,23 +58,16 @@ class Perception:
 		for contour_ in contours_:
 			cx, cy, w, h = cv.boundingRect(contour_)
 			cv.rectangle(bgr_frame, (cx, cy), (cx+w, cy+h), (0, 0, 255), 2)
+			text = f"width: {w}. height: {h}"
+			cv.putText(bgr_frame, text, (cx - 100, cy), self.font, 1, self.white, 2)
+		return bgr_frame, cx, cy, edged_frame, w, h
 
-			#M = cv.moments(contour_)
-			#if M['m00'] != 0:
-			#	cx = int(M['m10'] / M['m00'])
-			#	cy = int(M['m01'] / M['m00'])
-			#	cv.circle(bgr_frame, (cx, cy), 1, (0, 255, 255), 1)
+	def object_check(self, w, h):
+		if w >= 160 and h >= 65:
+			return True
+		else:
+			return False
 
-#			(x, y), radius = cv.minEnclosingCircle(contour_)
-#			center = (int(x), int(y))
-#			radius = int(radius)
-
-#			cv.circle(bgr_frame, center, radius, (0, 0, 255), 2)
-#			cv.putText(bgr_frame, 'circle radius is' + str(radius), (100, 100), self.font, 1, self.white, 1)
-#		end = time.time()
-#		print("detect_contours elapsed time: ", end-start)
-		return bgr_frame, cx, cy, edged_frame
-#		return bgr_frame, cx, cy, edged_frame
 
 	def detect_qr_code(self):
 
