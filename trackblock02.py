@@ -9,28 +9,30 @@ import cv2 as cv
 
 
 def get_imu_angle(ser, cnt):
-	
-	if (ser.in_waiting > 0):
-		line = ser.readline()
-		print(line)
+
+	while cnt <= 10:
+		if (ser.in_waiting > 0):
+			line = ser.readline()
+			cnt += 1
+
 	if cnt > 10:
 
-	line = ser.readline()
-	line = line.rstrip().lstrip()
-	line = str(line)
-	line = line.strip("'")
-	line.strip("b'")
-	values = line.split()
-	values = values[1:]
-	values[0] = values[0][:-5]
-	values[1] = values[1][:-5]
-	x = float(values[0])
-	y = float(values[1])
-	z = float(values[2])
-	if (x >= 180):
-		angle = x - 360
-	else:
-		angle = x
+		line = ser.readline()
+		line = line.rstrip().lstrip()
+		line = str(line)
+		line = line.strip("'")
+		line.strip("b'")
+		values = line.split()
+		values = values[1:]
+		values[0] = values[0][:-5]
+		values[1] = values[1][:-5]
+		x = float(values[0])
+		y = float(values[1])
+		z = float(values[2])
+		if (x >= 180):
+			angle = x - 360
+		else:
+			angle = x
 
 	return angle
 
@@ -89,7 +91,7 @@ def main():
 		localization.d_angle = perception.get_angle2center(cx)
 		print('object is at', cx, 'degrees')
 
-		dutyturn = 60
+		dutyturn = 50
 		# if object is 5 degrees or more to the right
 		if cx >= 5:
 			print('\nneed to turn right by', cx, "degrees")
@@ -97,20 +99,19 @@ def main():
 			print("abs(current angle - prior angle) = ",abs(get_imu_angle(ser, cnt) - localization.prior_imu_angle))
 
 			# while the difference in prior and current angle <= turn angle
-			while abs(get_imu_angle(ser, cnt) - localization.prior_imu_angle) <= cx:
-				print("		abs(current angle - prior angle) = ",get_imu_angle(ser, cnt) - localization.prior_imu_angle)
+			while True:
 				locomotion.drive([dutyturn, 0, dutyturn, 0]) # pivot right
-#				print("		current angle is:", get_imu_angle(ser, cnt), "degrees")
-				print("		turned right by", get_imu_angle(ser, cnt) - localization.prior_imu_angle, "degrees")
-				ret, frame = cap.read()
-				frame = cv.flip(frame, -1)
-				green_frame = perception.detect_color(frame, green_lower, green_upper)
-				frame, cx, cy = perception.detect_contours(green_frame, frame)
-				cx = perception.get_angle2center(cx)
-				cv.putText(frame, 'turning right, block is' + str(perception.angle_2_center) + 'degrees from the center', (100, 400), font, 1, white, 2)
+				turned = get_imu_angle(ser, cnt) - localization.prior_imu_angle
+				print("		turned right by", turned, "degrees")
+				cv.putText(frame, 'turning right, block is ' + str(cx) + 'degrees from the center', (100, 400), font, 1, white, 2)
 				out.write(frame)
-			locomotion.gameover() # stop turning
+				dutyturn -= 10
+				print("		lowering duty to: ", dutyturn)
+				if turned >= cx:
+					break
+			locomotion.drive([0, 0, 0, 0]) # stop turning
 			print("turned to object")
+			out.write(frame)
 
 		elif cx <= -5:
 			print("need to turn left by", abs(cx), "degrees")
@@ -130,7 +131,8 @@ def main():
 				cx = perception.get_angle2center(cx)
 				cv.putText(frame, 'turning left, block is' + str(perception.angle_2_center) + 'degrees from the center', (100, 400), font, 1, white, 2)
 				out.write(frame)
-			locomotion.gameover() # stop turning
+			out.write(frame)
+			locomotion.drive([0, 0, 0, 0]) # stop turning
 			print("turned to object")
 
 		out.write(frame)

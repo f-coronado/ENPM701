@@ -11,6 +11,12 @@ class Perception:
 		self.white = (255, 255, 255)
 		self.black = (0, 0, 0)
 		self.font = cv.FONT_HERSHEY_SIMPLEX
+		self.green_lower = (38, 61, 176) # values for home 4/21
+		self.green_upper = (237, 188, 255) # values for home 4/21
+		self.blue_lower = (72, 46, 64) # values from session1
+		self.blue_upper = (152, 178, 220) # values from session1
+		self.red_lower = (167, 69, 141) # values from session1
+		self.red_upper = (183, 170, 255) # values from session1
 
 	def add_channels(self, frame):
 		frame = np.expand_dims(frame, axis = -1)
@@ -21,7 +27,17 @@ class Perception:
 		self.angle_2_center = int((cx - 320) * .061)
 		return self.angle_2_center
 
-	def detect_color(self, frame, lower_hsv, upper_hsv):
+	def detect_color(self, frame, color):
+		if color == "red":
+			lower_hsv = self.red_lower
+			upper_hsv = self.red_upper
+		elif color == "green":
+			lower_hsv = self.green_lower
+			upper_hsv = self.green_upper
+		elif color == "blue":
+			lower_hsv = self.blue_lower
+			upper_hsv = self.blue_upper
+
 		hsv_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
 		mask_video = cv.inRange(hsv_frame, lower_hsv, upper_hsv)
 		#cv.imshow('masked frame', mask_video)
@@ -35,26 +51,31 @@ class Perception:
 		return edged_video
 
 	def detect_contours(self, edged_frame, bgr_frame):
+#		start = time.time()
 
 		contours_, hierarchy_ = cv.findContours(edged_frame, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-		cv.drawContours(edged_frame, contours_, -1, (255, 0, 0), 2) # not sure if i need this
+		cv.drawContours(bgr_frame, contours_, -1, (255, 0, 0), 2) # not sure if i need this
 
 		for contour_ in contours_:
-			M = cv.moments(contour_)
-			#               print('M: ', M)
-			if M['m00'] != 0:
-				cx = int(M['m10'] / M['m00'])
-				cy = int(M['m01'] / M['m00'])
-				cv.circle(bgr_frame, (cx, cy), 1, (0, 255, 255), 1)
+			cx, cy, w, h = cv.boundingRect(contour_)
+			cv.rectangle(bgr_frame, (cx, cy), (cx+w, cy+h), (0, 0, 255), 2)
 
-			(x, y), radius = cv.minEnclosingCircle(contour_)
-			center = (int(x), int(y))
-			radius = int(radius)
+			#M = cv.moments(contour_)
+			#if M['m00'] != 0:
+			#	cx = int(M['m10'] / M['m00'])
+			#	cy = int(M['m01'] / M['m00'])
+			#	cv.circle(bgr_frame, (cx, cy), 1, (0, 255, 255), 1)
 
-			cv.circle(bgr_frame, center, radius, (0, 0, 255), 2)
-			cv.putText(bgr_frame, 'circle radius is' + str(radius), (100, 100), self.font, 1, self.white, 1)
+#			(x, y), radius = cv.minEnclosingCircle(contour_)
+#			center = (int(x), int(y))
+#			radius = int(radius)
 
-		return bgr_frame, cx, cy
+#			cv.circle(bgr_frame, center, radius, (0, 0, 255), 2)
+#			cv.putText(bgr_frame, 'circle radius is' + str(radius), (100, 100), self.font, 1, self.white, 1)
+#		end = time.time()
+#		print("detect_contours elapsed time: ", end-start)
+		return bgr_frame, cx, cy, edged_frame
+#		return bgr_frame, cx, cy, edged_frame
 
 	def detect_qr_code(self):
 
