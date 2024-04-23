@@ -62,15 +62,27 @@ class Perception:
 		contours_, hierarchy_ = cv.findContours(edged_frame, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 		cv.drawContours(bgr_frame, contours_, -1, (255, 0, 0), 2) # not sure if i need this
 
-		for contour_ in contours_:
-			cx, cy, w, h = cv.boundingRect(contour_)
-			cv.rectangle(bgr_frame, (cx, cy), (cx+w, cy+h), (0, 0, 255), 2)
-			text = f"width: {w}. height: {h}"
-			cv.putText(bgr_frame, text, (cx - 100, cy), self.font, 1, self.white, 2)
+		areas = [cv.contourArea(c) for c in contours_]
+		max_idx = np.argmax(areas)
+		cont = contours_[max_idx]
+		cx, cy, w, h = cv.boundingRect(cont)
+		cv.rectangle(bgr_frame, (cx, cy), (cx+w, cy+h), (0, 0, 255), 2)
+		text = f"width: {w}. height: {h}"
+		cv.putText(bgr_frame, text, (cx - 100, cy), self.font, 1, self.white, 2)
+
+#		for contour_ in contours_:
+#			cx, cy, w, h = cv.boundingRect(contour_)
+#			cv.rectangle(bgr_frame, (cx, cy), (cx+w, cy+h), (0, 0, 255), 2)
+#			text = f"width: {w}. height: {h}"
+#			cv.putText(bgr_frame, text, (cx - 100, cy), self.font, 1, self.white, 2)
 		return bgr_frame, cx, cy, edged_frame, w, h
 
 	def object_check(self, w, h):
 		if w >= 160 and h >= 65:
+			return True
+		elif w >= 120 and h >= 140:
+			return True
+		elif w >= 70 and h >= 100:
 			return True
 		else:
 			return False

@@ -67,7 +67,7 @@ class Localization:
 			self.FL_encoder_cnt.append(GPIO.input(7))
 			self.counterFL += 1
 
-		return self.counterBR, self.counterBR
+		return self.counterFL, self.counterBR
 
 	def reset_tick_count(self):
 		self.counterBR = 0

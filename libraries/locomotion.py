@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 import time
 from .perception import Perception
+from .localization import Localization
 
 class Locomotion:
 
@@ -14,9 +15,9 @@ class Locomotion:
 		GPIO.setup(12, GPIO.IN, pull_up_down = GPIO.PUD_UP) # setup BR encoder
 		GPIO.setup(7, GPIO.IN, pull_up_down = GPIO.PUD_UP) # setup FL encoder
 
-		#GPIO.setup(36, GPIO.out)
-		#gripper_pwm = GPIO.PWM(36, 50) # setup pin 36 with 50Hz
-		#gripper_pwm.start(3.5) # start gripper in closed position
+		GPIO.setup(36, GPIO.OUT)
+		self.gripper_pwm = GPIO.PWM(36, 50) # setup pin 36 with 50Hz
+		self.gripper_pwm.start(3.5) # start gripper in closed position
 
 		self.duty = 80
 		self.duty_turn = 60
@@ -25,6 +26,7 @@ class Locomotion:
 			pwm_object.start(0) # start each pin with duty cycle of 0
 
 		self.perception = Perception()
+		self.local = Localization()
 
 
 	def drive(self, duty_cycle):
@@ -40,25 +42,43 @@ class Locomotion:
 	# 3.5 = close, 5.5 = half, 7.5 = open
 		if position == "open":
 			print("opening gripper")
-			pwm.ChangeDutyCycle(7.5)
+			self.gripper_pwm.ChangeDutyCycle(7.5)
 		if position == "half":
 			print("half opening gripper")
-			pwm.ChangeDutyCycle(5.5)
+			self.gripper_pwm.ChangeDutyCycle(5.5)
 		if position == "close":
 			print("closing gripper")
-			pwm.ChangeDutyCycle(3.5)
+			self.gripper_pwm.ChangeDutyCycle(3.5)
 
 
 	def get_object(self, cap, color, frame):
 
+		start = time.time()
 		edged_frame = self.perception.detect_color(frame, color)
 		frame, cx, cy, edged_frame, w, h = self.perception.detect_contours(edged_frame, frame)
+		end = time.time()
+		print("time taken to capture edge and contour within get_object", end-start)
 
 		if self.perception.object_check(w, h) is True:
-			grip("open") # open before we drive object into gripper opening
-			for i in range(10):
-				self.drive([duty, 0, 0, duty]) # drive to grab object
-			grip("closed")
+			print("object is within grasp")
+			self.drive([0, 0, 0, 0])
+			self.grip("open") # open before we drive object into gripper opening
+			time.sleep(3)
+			start = time.time()
+
+			while True:
+				self.drive([40, 0, 0, 40]) # drive to grab object
+				_, _ = self.local.get_tick_count() # update tick count
+				#print("driving into object to grasp")
+				# 3 inches = .0732m, and 4687 ticks/m
+				if self.local.counterFL >= .0762 * 4687:
+					break
+			end = time.time()
+			print("time taken through while loop in get_object: ", end-start)
+			self.grip("close")
+			self.drive([0, 0, 0, 0])
+			time.sleep(3)
+			return True
 
 
 	def gameover(self):
