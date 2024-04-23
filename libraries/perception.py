@@ -18,6 +18,13 @@ class Perception:
 		self.red_lower = (167, 69, 141) # values from session1
 		self.red_upper = (183, 170, 255) # values from session1
 
+	def get_pic(self, cap):
+		ret, frame = cap.read()
+		if not ret:
+			print("couldn't capture frame")
+		frame = cv.flip(frame, -1)
+		return frame
+
 	def add_channels(self, frame):
 		frame = np.expand_dims(frame, axis = -1)
 		frame = np.repeat(frame, 3, axis = -1)

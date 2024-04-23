@@ -11,6 +11,7 @@ import email
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
+import threading
 
 class Localization:
 
@@ -36,10 +37,14 @@ class Localization:
 		self.y_imu = []
 		self.z_imu = []
 		self.prior_imu_angle = 0 # the direction where the robot is pointed initially is 0 degrees
-		self.imu_angle = 0
+		#self.imu_angle = 0
+		#self.imu_angle_lock = threading.Lock()
+		#self.imu_thread = threading.Thread(target=self.get_imu_angle)
+		#self.imu_thread.daemon=True
+		#self.imu_thread.start()
 		self.d_angle = 0
 
-		self.ser = serial.Serial('/dev/ttyUSB0', 9600) # identify serial connection
+		#self.ser = serial.Serial('/dev/ttyUSB0', 9600) # identify serial connection
 
 		# robot characteristics
 		self.R = .018 # track width, double check this
@@ -102,49 +107,34 @@ class Localization:
 		if turn == 'f' or turn == 'b':
 			return
 
-	def get_imu_angle(self, ser, cnt):
-
+	def get_imu_angle(self):
+		global imu_angle
+		ser = serial.Serial('/dev/ttyUSB0', 9600)
+		cnt = 0
 		while True:
 			if (ser.in_waiting > 0):
 				cnt += 1
-				line = self.ser.readline()
-#				print(line)
+				line = ser.readline()
 
 				if cnt > 10:
-					line = line.rstrip().lstrip()
-#					print(line)
 
+					line = ser.readline()
+					line = line.rstrip().lstrip()
 					line = str(line)
 					line = line.strip("'")
 					line.strip("b'")
-#					print(line)
-
 					values = line.split()
-#					print("values before reassigning: ", values)
 					values = values[1:]
 					values[0] = values[0][:-5]
 					values[1] = values[1][:-5]
-#					print("values after reassinging: ", values)
 					x = float(values[0])
 					y = float(values[1])
 					z = float(values[2])
 					if (x >= 180):
-						#print("x>180")
-						angle = x - 360
-						#print("adjusted x to: ", angle)
+						imu_angle = x - 360
 					else:
-						angle = x
+						imu_angle = x
 
-					self.imu_angle = angle
-#					print("X:", x, "Y:", y, "Z:", z)
-
-					self.x_imu.append(x)
-#					self.y_imu.append(y)
-#					self.z_imu.append(z)
-					break
-
-#		print("get_imu_angle()=", angle)
-		return angle
 
 	def email(self):
 		# define timestamp and record a image

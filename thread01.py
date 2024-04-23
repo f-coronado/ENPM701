@@ -34,10 +34,6 @@ def get_imu_angle():
 				else:
 					imu_angle = x
 
-#		shared_variable.acquire()
-#		shared_variable.value = imu_angle
-#		shared_variable.release()
-
 def main():
 	global imu_angle
 
@@ -53,29 +49,39 @@ def main():
 	time.sleep(2)
 
 	# get current angle from imu
+	start = time.time()
 	with imu_angle_lock:
 		current_angle = imu_angle
+	end = time.time()
+	print("took:", end-start, "seconds to get angle")
 	print("starting angle is: ", current_angle)
 	print("waiting 5s..")
+
 	time.sleep(5)
 
+	start = time.time()
 	with imu_angle_lock:
 		current_angle = imu_angle
+	end = time.time()
+	print("took:", end-start, "seconds to get angle")
 	print("updated angle is: ", current_angle)
 	print("waiting 5s..")
 	time.sleep(5)
 
+	start = time.time()
 	with imu_angle_lock:
 		current_angle = imu_angle
+	end = time.time()
+	print("took:", end-start, "seconds to get angle")
 	print("updated angle is: ", current_angle)
 	print("waiting 5s..")
 	time.sleep(5)
 
+	start = time.time()
 	with imu_angle_lock:
 		current_angle = imu_angle
 	print("updated angle is: ", current_angle)
 	print("waiting 5s..")
-	time.sleep(5)
 
 if __name__ == "__main__":
 	main()
