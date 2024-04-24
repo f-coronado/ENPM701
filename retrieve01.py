@@ -1,6 +1,7 @@
 import cv2 as cv
 from libraries.locomotion import Locomotion
 from libraries.perception import Perception
+from libraries.localization import Localization
 import time
 
 def main():
@@ -8,6 +9,7 @@ def main():
 	start = time.time()
 	perception = Perception()
 	locomotion = Locomotion()
+	local = Localization()
 	#file = "output_video.mp4"
 	#cap = cv.VideoCapture(file)
 	#fps = cap.get(cv.CAP_PROP_FPS)
@@ -19,12 +21,12 @@ def main():
 	height = 480
 	fourcc = cv.VideoWriter_fourcc(*'mp4v')
 	out = cv.VideoWriter("retrieve01.mp4", fourcc, fps, (width, height))
-	duty = 20
+	duty = 60
 
 	while cap.isOpened():
 		ret, frame = cap.read()
 		frame = cv.flip(frame, -1)
-		cv.imshow("live feed", frame)
+		#cv.imshow("live feed", frame)
 		if not ret:
 			print("could not read frame")
 			break
@@ -38,8 +40,10 @@ def main():
 			break
 
 		else:
+			local.get_tick_count()
+			print("FL cnt: ", local.counterFL, "BR cnt: ", local.counterBR)
 			out.write(frame)
-			print("driving to obj")
+			#print("driving to obj")
 			locomotion.drive([duty, 0, 0, duty])
 		end = time.time()
 		print("time taken for else statement in retrieve01.py", end-start)
