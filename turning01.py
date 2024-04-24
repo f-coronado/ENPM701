@@ -1,4 +1,3 @@
-
 from libraries.localization import Localization
 from libraries.locomotion import Locomotion
 import threading
@@ -48,9 +47,10 @@ def main():
 	local = Localization()
 	loco = Locomotion()
 
-	duty = 60
 	print("starting..")
 	time.sleep(2)
+	dec = 0.05
+	target_angle = 90
 
 	for i in range(4):
 		print("i: ", i)
@@ -59,19 +59,22 @@ def main():
 		local.prior_imu_angle = current_angle
 #		print("difference in angle: ", abs(local.prior_imu_angle - current_angle))
 		print("current angle before turning: ", current_angle)
+		duty = 70
 		time.sleep(3)
 
 		while True:
-#			print("		turning")
 			loco.drive([duty, 0, duty, 0])
 			with imu_angle_lock:
 				current_angle = imu_angle
-#				print("		updated current angle: ", current_angle)
-			if abs(local.prior_imu_angle - current_angle) >= 90:
+			if abs(local.prior_imu_angle - current_angle) >= target_angle - 10:
+				duty = 40
+				#print("updated duty: ", duty)
+				#print("abs(local.prior_imu_angle - current_angle: ", abs(local.prior_imu_angle - current_angle))
+			if abs(local.prior_imu_angle - current_angle) >= target_angle:
 				print("		turned 90 degrees")
 				print("		updated current angle: ", current_angle)
 				loco.drive([0, 0, 0, 0])
-				time.sleep(5)
+				time.sleep(2)
 				break
 
 
