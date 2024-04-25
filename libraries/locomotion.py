@@ -28,6 +28,73 @@ class Locomotion:
 		self.perception = Perception()
 		self.local = Localization()
 
+	def control_straight(self, direction):
+
+		error =  self.local.counterFL - self.local.counterBR
+
+
+	def look4color(self, color):
+
+		if color == "green":
+			lower = self.perception.green_lower
+			upper = self.perception.green_upper
+		elif color == "red":
+			lower = self.perception.red_lower
+			upper = self.perception.red_upper
+		elif color == "blue":
+			lower = self.perception.blue_lower
+			upper = self.perception.blue_upper
+
+		with self.local.imu_angle_lock:
+			self.local.prior_imu_angle = self.local.imu_angle
+		print("initial angle: ", self.local.prior_imu_angle)
+		time.sleep(3)
+		right_turn = 90
+		left_turn = 180
+
+		while True:
+			frame = self.perception.get_pic()
+			# turn right 90 degrees and look for the color obj
+			self.drive([self.duty_turn, 0, self.duty_turn, 0])
+			# get edged frame
+			edged = self.perception.detect_color(frame, color)
+			# if we found the object
+			if self.perception.detect_contours(edged, frame) is not None:
+				frame, cx, cy, edged, w, h = self.perception.detect_contours(edged, frame)
+				print("got centroid")
+				self.drive([self.duty, 0, 0, self.duty]) # drive straight to obj
+
+			# get current angle
+			with self.local.imu_angle_lock:
+				self.local.lr_imu_angle = self.local.imu_angle
+			# else if the bot has turned right > 90 degrees
+			if abs(self.local.prior_imu_angle - self.local.lr_imu_angle) >= right_turn:
+				break
+
+		# update prior imu_angle
+		with self.local.imu_angle_lock:
+			self.local.prior_imu_angle = self.local.imu_angle
+
+		while True:
+			self.drive([0, self.duty_turn, 0, self.duty_turn]) # turn left
+			# check for object
+			edged = self.perception.detect_color(frame, color)
+			if self.perception.detect_contour(edged, frame) is not None:
+				frame, cx, cy, w, h = self.perception.detect_contours(edged, frame)
+				print("got centroid")
+
+			# get current angle
+			with self.local.imu_angle_lock:
+				self.local.lr_imu_angle = self.local.imu_angle
+
+			if cx != 0 and cy != 0: # if we find our object then..
+				self.drive([self.duty, 0, 0, self.duty]) # drive straight to obj
+			# else if the bot has left > 180 degrees
+			elif abs(self.local.prior_imu_angle - self.local.lr_imu_angle) >= right_turn:
+				self.drive([0, 0, 0, 0]) # stop
+				break
+
+
 
 	def drive(self, duty_cycle):
 	# To drive forward: pins 31 and 37 true, pins 33 and 35 false

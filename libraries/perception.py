@@ -17,9 +17,10 @@ class Perception:
 		self.blue_upper = (152, 178, 220) # values from session1
 		self.red_lower = (167, 69, 141) # values from session1
 		self.red_upper = (183, 170, 255) # values from session1
+		self.cap = cv.VideoCapture(0)
 
-	def get_pic(self, cap):
-		ret, frame = cap.read()
+	def get_pic(self):
+		ret, frame = self.cap.read()
 		if not ret:
 			print("couldn't capture frame")
 		frame = cv.flip(frame, -1)
@@ -60,6 +61,8 @@ class Perception:
 	def detect_contours(self, edged_frame, bgr_frame):
 
 		contours_, hierarchy_ = cv.findContours(edged_frame, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+		if not contours_:
+			return
 		cv.drawContours(bgr_frame, contours_, -1, (255, 0, 0), 2) # not sure if i need this
 
 		areas = [cv.contourArea(c) for c in contours_]

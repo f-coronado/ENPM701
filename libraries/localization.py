@@ -37,12 +37,14 @@ class Localization:
 		self.y_imu = []
 		self.z_imu = []
 		self.prior_imu_angle = 0 # the direction where the robot is pointed initially is 0 degrees
-		#self.imu_angle = 0
-		#self.imu_angle_lock = threading.Lock()
-		#self.imu_thread = threading.Thread(target=self.get_imu_angle)
-		#self.imu_thread.daemon=True
-		#self.imu_thread.start()
+		self.lr_imu_angle = 0 # used to store last recorded imu_angle from thread
+		self.imu_angle = 0 # used to get imu_angle from thread
+		self.imu_angle_lock = threading.Lock()
+		self.imu_thread = threading.Thread(target=self.get_imu_angle)
+		self.imu_thread.daemon=True
+		self.imu_thread.start()
 		self.d_angle = 0
+		self.target_angle = 0
 
 		#self.ser = serial.Serial('/dev/ttyUSB0', 9600) # identify serial connection
 
