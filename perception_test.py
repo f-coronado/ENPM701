@@ -3,6 +3,17 @@ import cv2 as cv
 import numpy as np
 import time
 
+
+def main2():
+	perception = Perception()
+	frame = perception.get_pic()
+	edged = perception.detect_color(frame, "green")
+	cv.imshow('edged: ', edged)
+	cv.waitKey(0)
+	print("result of detect_contours: ", perception.detect_contours(edged, frame), "is of type:" , type(perception.detect_contours(edged, frame)))
+	cv.destroyAllWindows()
+	return None
+
 def main():
 
 	start = time.time()
@@ -34,5 +45,8 @@ def main():
 	end = time.time()
 	print("time elapsed: ", end-start)
 
+
+
 if __name__ == "__main__":
-	main()
+	#main()
+	main2()

@@ -2,7 +2,7 @@ import RPi.GPIO as GPIO
 import time
 from .perception import Perception
 from .localization import Localization
-#import cv2 as cv
+import cv2 as cv
 
 class Locomotion:
 
@@ -53,8 +53,8 @@ class Locomotion:
 
 		with self.local.imu_angle_lock:
 			self.local.prior_imu_angle = self.local.imu_angle
-		print("initial angle: ", self.local.prior_imu_angle)
-		time.sleep(3)
+		#print("initial angle: ", self.local.prior_imu_angle)
+		#time.sleep(3)
 		right_turn = 90
 		left_turn = 180
 
@@ -62,15 +62,31 @@ class Locomotion:
 			frame = self.perception.get_pic()
 			#out.write(frame)
 			# turn right 90 degrees and look for the color obj
-			self.drive([self.duty_turn, 0, self.duty_turn, 0])
+			self.drive([70, 0, 70, 0])
 			# get edged frame
 			edged = self.perception.detect_color(frame, color)
+			#cv.imshow("edged", edged)
+			#cv.waitKey(30)
 			# if we found the object
 			if self.perception.detect_contours(edged, frame) is not None:
 				frame, cx, cy, edged, w, h = self.perception.detect_contours(edged, frame)
-				#out.write(frame)
-				#print("got centroid")
-				self.drive([self.duty, 0, 0, self.duty]) # drive straight to obj
+				print("contours is not none")
+				cv.imshow("contours: ", frame)
+				cv.waitKey(30)
+				#cv.waitKey(0)
+				# and the obj is close to the center
+				print("angle2center: ", self.perception.get_angle2center(cx))
+				if abs(self.perception.get_angle2center(cx)) <= 2:
+					self.drive([0, 0, 0, 0]) # stop
+					print("cx: ", cx, "cy: ", cy)
+					#cv.circle(frame, (cx, cy), 10, (0, 0, 255), thickness = 2)
+					cv.imshow("centerd obj", frame)
+					#cv.waitKey(0)
+					#out.write(frame)
+					#print("got centroid")
+					self.get_object(color, frame)
+					time.sleep(10000)
+
 
 			# get current angle
 			with self.local.imu_angle_lock:
@@ -135,7 +151,7 @@ class Locomotion:
 			self.gripper_pwm.ChangeDutyCycle(3.5)
 
 
-	def get_object(self, cap, color, frame):
+	def get_object(self, color, frame):
 
 		start = time.time()
 		edged_frame = self.perception.detect_color(frame, color)
@@ -143,6 +159,15 @@ class Locomotion:
 		end = time.time()
 		print("time taken to capture edge and contour within get_object", end-start)
 
+		while True:
+			frame = self.perception.get_pic()
+			self.drive([self.duty, 0, 0, self.duty])
+			edged_frame = self.perception.detect_color(frame, color)
+			frame, cx, cy, edged_frame, w, h = self.perception.detect_contours(edged_frame, frame)
+			if self.perception.object_check(w, h) is True:
+				break
+
+		# if object is close enough then...
 		if self.perception.object_check(w, h) is True:
 			print("object is within grasp")
 			self.drive([0, 0, 0, 0])

@@ -69,10 +69,12 @@ class Perception:
 		areas = [cv.contourArea(c) for c in contours_]
 		max_idx = np.argmax(areas)
 		cont = contours_[max_idx]
-		cx, cy, w, h = cv.boundingRect(cont)
-		cv.rectangle(bgr_frame, (cx, cy), (cx+w, cy+h), (0, 0, 255), 2)
+		x, y, w, h = cv.boundingRect(cont)
+		cv.rectangle(bgr_frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
 		text = f"width: {w}. height: {h}"
-		cv.putText(bgr_frame, text, (cx - 100, cy), self.font, 1, self.white, 2)
+		cv.putText(bgr_frame, text, (x - 100, y), self.font, 1, self.white, 2)
+		cx = int(x + w/2)
+		cy = int(y + h/2)
 
 #		for contour_ in contours_:
 #			cx, cy, w, h = cv.boundingRect(contour_)
