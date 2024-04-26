@@ -110,7 +110,7 @@ class Localization:
 			return
 
 	def get_imu_angle(self):
-		global imu_angle
+		#global imu_angle
 		ser = serial.Serial('/dev/ttyUSB0', 9600)
 		cnt = 0
 		while True:
@@ -133,9 +133,9 @@ class Localization:
 					y = float(values[1])
 					z = float(values[2])
 					if (x >= 180):
-						imu_angle = x - 360
+						self.imu_angle = x - 360
 					else:
-						imu_angle = x
+						self.imu_angle = x
 
 
 	def email(self):

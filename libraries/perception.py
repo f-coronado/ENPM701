@@ -18,6 +18,7 @@ class Perception:
 		self.red_lower = (167, 69, 141) # values from session1
 		self.red_upper = (183, 170, 255) # values from session1
 		self.cap = cv.VideoCapture(0)
+		self.codec = cv.VideoWriter_fourcc(*'mp4v')
 
 	def get_pic(self):
 		ret, frame = self.cap.read()

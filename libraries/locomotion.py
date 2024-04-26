@@ -2,6 +2,7 @@ import RPi.GPIO as GPIO
 import time
 from .perception import Perception
 from .localization import Localization
+#import cv2 as cv
 
 class Locomotion:
 
@@ -22,6 +23,9 @@ class Locomotion:
 		self.duty = 80
 		self.duty_turn = 60
 
+		#self.cap = cv.VideoCapture(0)
+		#self.codec = cv.VideoWriter_fourcc(*'mp4v')
+
 		for pwm_object in self.pwm_obj:
 			pwm_object.start(0) # start each pin with duty cycle of 0
 
@@ -34,6 +38,8 @@ class Locomotion:
 
 
 	def look4color(self, color):
+
+		#out = cv.VideoWriter('look4color.mp4', self.codec, 1, (640, 480))
 
 		if color == "green":
 			lower = self.perception.green_lower
@@ -54,6 +60,7 @@ class Locomotion:
 
 		while True:
 			frame = self.perception.get_pic()
+			#out.write(frame)
 			# turn right 90 degrees and look for the color obj
 			self.drive([self.duty_turn, 0, self.duty_turn, 0])
 			# get edged frame
@@ -61,39 +68,49 @@ class Locomotion:
 			# if we found the object
 			if self.perception.detect_contours(edged, frame) is not None:
 				frame, cx, cy, edged, w, h = self.perception.detect_contours(edged, frame)
-				print("got centroid")
+				#out.write(frame)
+				#print("got centroid")
 				self.drive([self.duty, 0, 0, self.duty]) # drive straight to obj
 
 			# get current angle
 			with self.local.imu_angle_lock:
 				self.local.lr_imu_angle = self.local.imu_angle
+			print("current angle: ", self.local.lr_imu_angle)
 			# else if the bot has turned right > 90 degrees
 			if abs(self.local.prior_imu_angle - self.local.lr_imu_angle) >= right_turn:
+				print("turned right by 90 degrees")
+				frame = self.perception.get_pic()
+				#out.write(frame)
 				break
 
 		# update prior imu_angle
 		with self.local.imu_angle_lock:
 			self.local.prior_imu_angle = self.local.imu_angle
+		print("updated angle is: ", self.local.prior_imu_angle)
 
 		while True:
+			frame = self.perception.get_pic()
+			#out.write(frame)
 			self.drive([0, self.duty_turn, 0, self.duty_turn]) # turn left
 			# check for object
 			edged = self.perception.detect_color(frame, color)
-			if self.perception.detect_contour(edged, frame) is not None:
-				frame, cx, cy, w, h = self.perception.detect_contours(edged, frame)
-				print("got centroid")
-
+			if self.perception.detect_contours(edged, frame) is not None:
+				frame, cx, cy, edged, w, h = self.perception.detect_contours(edged, frame)
+				#print("got centroid")
+				#frame = self.perception.get_pic()
+				#out.write(frame)
 			# get current angle
 			with self.local.imu_angle_lock:
 				self.local.lr_imu_angle = self.local.imu_angle
+			print("current angle: ", self.local.lr_imu_angle)
 
-			if cx != 0 and cy != 0: # if we find our object then..
-				self.drive([self.duty, 0, 0, self.duty]) # drive straight to obj
-			# else if the bot has left > 180 degrees
-			elif abs(self.local.prior_imu_angle - self.local.lr_imu_angle) >= right_turn:
-				self.drive([0, 0, 0, 0]) # stop
+			# else if the bot has turned left > 180 degrees
+			if abs(self.local.prior_imu_angle - self.local.lr_imu_angle) >= left_turn:
+				print("turned left by 180 degrees")
+				frame = self.perception.get_pic()
+				#out.write(frame)
 				break
-
+		#out.release()
 
 
 	def drive(self, duty_cycle):
