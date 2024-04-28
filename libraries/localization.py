@@ -26,7 +26,7 @@ class Localization:
 
 		# intialize encoder pose
 		# initialize x and y to be at center of landing zone
-		self.x = 2 * .3028
+		self.x = 2 * .3028 # .3028 is a conversion factor to meters
 		self.y = 2 * .3028
 		self.angle = 0
 		self.x_pos = [self.x]
@@ -38,6 +38,7 @@ class Localization:
 		self.z_imu = []
 		self.prior_imu_angle = 0 # the direction where the robot is pointed initially is 0 degrees
 		self.lr_imu_angle = 0 # used to store last recorded imu_angle from thread
+		self.ser = serial.Serial('/dev/ttyUSB0', 9600)
 		self.imu_angle = 0 # used to get imu_angle from thread
 		self.imu_angle_lock = threading.Lock()
 		self.imu_thread = threading.Thread(target=self.get_imu_angle)
@@ -57,6 +58,10 @@ class Localization:
 #		GPIO.setmode(GPIO.BOARD)
 #		GPIO.setup(12, GPIO.IN, pull_up_down = GPIO.PUD_UP)
 #		GPIO.setup(7, GPIO.IN, pull_up_down = GPIO.PUD_UP)
+
+	def __del__(self):
+		self.ser.close()
+
 
 	def get_tick_count(self):
 		if int(GPIO.input(12)) != int(self.priorBR):
@@ -111,31 +116,33 @@ class Localization:
 
 	def get_imu_angle(self):
 		#global imu_angle
-		ser = serial.Serial('/dev/ttyUSB0', 9600)
+		#ser = serial.Serial('/dev/ttyUSB0', 9600)
 		cnt = 0
 		while True:
-			if (ser.in_waiting > 0):
-				cnt += 1
-				line = ser.readline()
+			with self.imu_angle_lock:
+				if (self.ser.in_waiting > 0):
+					cnt += 1
+					line = self.ser.readline().decode().strip()
 
-				if cnt > 10:
-
-					line = ser.readline()
-					line = line.rstrip().lstrip()
-					line = str(line)
-					line = line.strip("'")
-					line.strip("b'")
-					values = line.split()
-					values = values[1:]
-					values[0] = values[0][:-5]
-					values[1] = values[1][:-5]
-					x = float(values[0])
-					y = float(values[1])
-					z = float(values[2])
-					if (x >= 180):
-						self.imu_angle = x - 360
-					else:
-						self.imu_angle = x
+					if line:
+						values = line.split()
+						if len(values) >= 3:
+							line = self.ser.readline()
+							line = line.rstrip().lstrip()
+							line = str(line)
+							line = line.strip("'")
+							line.strip("b'")
+							values = line.split()
+							values = values[1:]
+							values[0] = values[0][:-5]
+							values[1] = values[1][:-5]
+							x = float(values[0])
+							y = float(values[1])
+							z = float(values[2])
+							if (x >= 180):
+								self.imu_angle = x - 360
+							else:
+								self.imu_angle = x
 
 
 	def email(self):

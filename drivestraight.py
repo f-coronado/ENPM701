@@ -49,9 +49,69 @@ def control():
 		#BR_error = 0
 		time.sleep(sample_time)
 
+def control2():
+	loco = Locomotion()
+	local = Localization()
+
+	left_adjustment = 8
+	right_adjustment = 18
+
+	time.sleep(4)
+
+
+	with local.imu_angle_lock:
+		start_angle = round(local.imu_angle, 2)
+	print("starting angle: ", start_angle)
+
+	max_diff = .25
+	time.sleep(5)
+	loco.drive([loco.duty, 0, 0, loco.duty])
+	pin31 = loco.duty
+	pin37 = loco.duty
+	distance = 0
+
+	while True:
+
+		local.counterFL, local.counterBR = local.get_tick_count()
+
+		with local.imu_angle_lock:
+			local.lr_imu_angle = local.imu_angle
+		print("start_angle: ", start_angle, "current angle: ", round(local.lr_imu_angle, 3), "pin speeds: 31=", pin31, "37=",pin37,\
+		"distance: ", round(distance, 2), "counterFL: ", local.counterFL, "counterBR: ", \
+		local.counterBR)
+
+		if local.lr_imu_angle - start_angle >= max_diff: # this mean heading is toward the right
+			#print("angle diff: ", local.lr_imu_angle - start_angle)
+			print("leaning right")
+			pin31 = loco.duty - left_adjustment
+			pin37 = loco.duty + right_adjustment
+
+			#pin37 = loco.duty
+
+			#pin31 -= adjustment
+			#pin37 += adjustment
+			#pin31 = max(30, min(pin31, 90))
+			#pin37 = max(30, min(pin37, 90))
+			loco.drive([pin31, 0, 0, pin37]) # speed up right wheels
+		elif local.lr_imu_angle - start_angle <= -max_diff: # if robot is leaning towards left...
+			print("leaning left")
+			pin31 = loco.duty  + left_adjustment
+			pin37 = loco.duty - right_adjustment
+			#pin31 += adjustment
+			#pin37 -= adjustment
+			#pin31 = max(30, min(pin31, 90))
+			#pin37 = max(30, min(pin37, 90))
+			loco.drive([pin31, 0, 0, pin37]) # speed up right wheels
+		distance = local.tick_2_distance(local.counterFL) # check how far we have traveled
+		if distance >= 2:
+			break
+
+	loco.drive([0, 0, 0, 0]) # stop
+
 
 def main():
-	control()
+	#control()
+	control2()
 
 if __name__ == "__main__":
 

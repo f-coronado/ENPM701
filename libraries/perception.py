@@ -27,6 +27,10 @@ class Perception:
 		frame = cv.flip(frame, -1)
 		return frame
 
+	def write_on_frame(self, frame, text):
+		cv.putText(frame, text, (100, 20), self.font, 1, self.white, 2)
+		return frame
+
 	def add_channels(self, frame):
 		frame = np.expand_dims(frame, axis = -1)
 		frame = np.repeat(frame, 3, axis = -1)
@@ -63,7 +67,12 @@ class Perception:
 
 		contours_, hierarchy_ = cv.findContours(edged_frame, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 		if not contours_:
-			return
+			cx = 800
+			cy = 800
+			w = 0
+			h = 0
+			# we always want to return something
+			return bgr_frame, cx, cy, edged_frame, w, h
 		cv.drawContours(bgr_frame, contours_, -1, (255, 0, 0), 2) # not sure if i need this
 
 		areas = [cv.contourArea(c) for c in contours_]
@@ -84,12 +93,15 @@ class Perception:
 		return bgr_frame, cx, cy, edged_frame, w, h
 
 	def object_check(self, w, h):
-		if w >= 160 and h >= 65:
-			return True
-		elif w >= 120 and h >= 140:
-			return True
-		elif w >= 70 and h >= 100:
-			return True
+		#if w >= 160 and h >= 65:
+		#	return True
+		#elif w >= 120 and h >= 140:
+		#	return True
+		if w > 100 and h > 145:
+			return "grip"
+
+		elif w >= 50 and h >= 76:
+			return "open"
 		else:
 			return False
 
