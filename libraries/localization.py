@@ -12,17 +12,24 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 import threading
+import multiprocessing
 
 class Localization:
 
 	def __init__(self):
 		self.FL_encoder_cnt = []
 		self.BR_encoder_cnt = []
-		self.counterBR = 0
-		self.counterFL = 0
-		self.priorFL = 5
-		self.priorBR = 5
+		self.counterBR = multiprocessing.Value('i', 0)
+		self.counterFL = multiprocessing.Value('i', 0)
+		self.priorFL = multiprocessing.Value('i', 5) # why is this 5?
+		self.priorBR = multiprocessing.Value('i', 5) # this one too
 		self.positions = []
+
+		self.tick_process = multiprocessing.Process(target=self.update_tick_count)
+		self.tick_process.daemon=True
+		self.tick_process.start()
+		print("tick_process started")
+		#time.sleep(5)
 
 		# intialize encoder pose
 		# initialize x and y to be at center of landing zone
@@ -47,13 +54,16 @@ class Localization:
 		self.d_angle = 0
 		self.target_angle = 0
 
-		#self.ser = serial.Serial('/dev/ttyUSB0', 9600) # identify serial connection
+		self.left_adjust = 8
+		self.right_adjust = 18
 
 		# robot characteristics
 		self.R = .018 # track width, double check this
 		self.C = .204204 # wheel circumference in meters
 		self.gear_ratio = 1/120
 		self.ticks_per_mtr_rev = 8
+
+		print("active thread count: ", threading.activeCount())
 
 #		GPIO.setmode(GPIO.BOARD)
 #		GPIO.setup(12, GPIO.IN, pull_up_down = GPIO.PUD_UP)
@@ -63,18 +73,41 @@ class Localization:
 		self.ser.close()
 
 
+	def update_tick_count(self):
+		print("called update_tick_count")
+		while True:
+			try:
+				input12 = GPIO.input(12)
+				input7 = GPIO.input(7)
+
+				with self.counterBR.get_lock():
+					#if int(GPIO.input(12)) != int(self.priorBR):
+					if input12 != self.priorBR.value:
+						self.priorBR.value = input12
+						#self.BR_encoder_cnt.append(PIO.input(12))
+						self.BR_encoder_cnt.append(input12)
+						self.counterBR.value += 1
+						#print("BR tick cnt: ", self.counterBR)
+				with self.counterFL.get_lock():
+					if input7 != self.priorFL.value:
+					#if int(GPIO.input(7)) != int(self.priorFL):
+						self.priorFL.value = input7
+						self.FL_encoder_cnt.append(input7)
+						self.counterFL.value += 1
+
+						#self.priorFL = int(GPIO.input(7))
+						#self.FL_encoder_cnt.append(GPIO.input(7))
+						#self.counterFL += 1
+						#print("FL tick cnt: ", self.counterFL)
+
+			except Exception as e:
+				print("an error occurred in update_tick_count: ", e)
+			#time.sleep(.01)
+
 	def get_tick_count(self):
-		if int(GPIO.input(12)) != int(self.priorBR):
-			self.priorBR = int(GPIO.input(12))
-			self.BR_encoder_cnt.append(GPIO.input(12))
-			self.counterBR += 1
-
-		if int(GPIO.input(7)) != int(self.priorFL):
-			self.priorFL = int(GPIO.input(7))
-			self.FL_encoder_cnt.append(GPIO.input(7))
-			self.counterFL += 1
-
-		return self.counterFL, self.counterBR
+		print("inside get_tick_count")
+		print("returning get_tick_count")
+		return self.counterFL.value, self.counterBR.value
 
 	def reset_tick_count(self):
 		self.counterBR = 0
@@ -84,7 +117,7 @@ class Localization:
 		return self.counterBR, self.counterFL
 
 	def tick_2_distance(self, ticks):
-		distance = ticks / 4687 # distance in meters, there are 4687 ticks/m
+		distance = ticks.value / 4687 # distance in meters, there are 4687 ticks/m
 		return distance
 
 	def angle_2_ticks(self, angle):
@@ -119,6 +152,7 @@ class Localization:
 		#ser = serial.Serial('/dev/ttyUSB0', 9600)
 		cnt = 0
 		while True:
+			#time.sleep(.05)
 			with self.imu_angle_lock:
 				if (self.ser.in_waiting > 0):
 					cnt += 1
