@@ -110,32 +110,29 @@ class Perception:
 
 		command = 'sudo modprobe bcm2835-v4l2'
 		os.system(command)
-
-		# open video capture
-		cap = cv.VideoCapture(0)
-
 		# define detector
 		detector = cv.QRCodeDetector()
 
 		while True:
-			check, img = cap.read()
+			img = self.get_pic()
+
 			data, bbox, _ = detector.detectAndDecode(img)
 
 			if(bbox is not None):
 				for i in range(len(bbox)):
 					cv.line(img, tuple(bbox[i][0]), tuple(bbox[(i+1) % len(bbox)][0]), color=(0, 0, 255), thickness = 4)
 					cv.putText(img, data, (int(bbox[0][0][0]), int(bbox[0][0][1]) - 10), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0) ,2)
-			if data:
-				print("Data: ", data)
+
 			# show results to the screen
 			cv.imshow("QR code detector", img)
-
 			# break out of the loop by pressing the q key
-			if(cv.waitKey(1) == ord("q")):
+			cv.waitKey(30)
+			#if(cv.waitKey(1) == ord("q")):
+			if data:
+				print("Data: ", data)
 				break
-
-		cap.release()
 		cv.destroyAllWindows()
+		return data
 
 
 #	def trackblock(

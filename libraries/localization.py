@@ -17,6 +17,10 @@ import multiprocessing
 class Localization:
 
 	def __init__(self):
+		GPIO.setmode(GPIO.BOARD)
+		GPIO.setup(12, GPIO.IN, pull_up_down = GPIO.PUD_UP) # setup BR encoder
+		GPIO.setup(7, GPIO.IN, pull_up_down = GPIO.PUD_UP) # setup FL encoder
+
 		self.FL_encoder_cnt = []
 		self.BR_encoder_cnt = []
 		self.counterBR = multiprocessing.Value('i', 0)
@@ -33,8 +37,8 @@ class Localization:
 
 		# intialize encoder pose
 		# initialize x and y to be at center of landing zone
-		self.x = 2 * .3028 # .3028 is a conversion factor to meters
-		self.y = 2 * .3028
+		self.x = 2 # .3028 is a conversion factor to meters
+		self.y = 2
 		self.angle = 0
 		self.x_pos = [self.x]
 		self.y_pos = [self.y]
@@ -53,9 +57,12 @@ class Localization:
 		self.imu_thread.start()
 		self.d_angle = 0
 		self.target_angle = 0
+		self.start_angle = self.imu_angle
 
+		# variables used for controlling steering
 		self.left_adjust = 8
 		self.right_adjust = 18
+		self.max_diff = .25
 
 		# robot characteristics
 		self.R = .018 # track width, double check this
@@ -94,12 +101,6 @@ class Localization:
 						self.priorFL.value = input7
 						self.FL_encoder_cnt.append(input7)
 						self.counterFL.value += 1
-
-						#self.priorFL = int(GPIO.input(7))
-						#self.FL_encoder_cnt.append(GPIO.input(7))
-						#self.counterFL += 1
-						#print("FL tick cnt: ", self.counterFL)
-
 			except Exception as e:
 				print("an error occurred in update_tick_count: ", e)
 			#time.sleep(.01)
@@ -117,7 +118,7 @@ class Localization:
 		return self.counterBR, self.counterFL
 
 	def tick_2_distance(self, ticks):
-		distance = ticks.value / 4687 # distance in meters, there are 4687 ticks/m
+		distance = (ticks.value / 4687) * 3.28084 # distance in meters, there are 4687 ticks/m
 		return distance
 
 	def angle_2_ticks(self, angle):
@@ -177,6 +178,29 @@ class Localization:
 								self.imu_angle = x - 360
 							else:
 								self.imu_angle = x
+
+	def get_angle_dist(self, x, y):
+		print("current location is x:", self.x, "y:",  self.y, "feet")
+		print("currenty pointed at: ", self.lr_imu_angle, "degrees")
+
+		dx = x - self.x
+		dy = y - self.y
+		target_angle = math.degrees(math.atan2(dy,dx))
+		turn_angle = target_angle - self.lr_imu_angle
+
+		if target_angle <= -180:
+			turn_angle += 360
+			print("target_angle < -180, normalizing to: ", turn_angle)
+		elif target_angle > 180:
+			turn_angle -= 180
+			print("target_angle > 180, normalizing to: ", turn_angle)
+
+		distance = math.sqrt(dx**2 + dy **2)
+		print("distance to travel is ", distance, "feet")
+		print("need to turn by: ", turn_angle)
+
+		return turn_angle, distance
+
 
 
 	def email(self):
