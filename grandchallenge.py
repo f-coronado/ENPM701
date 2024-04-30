@@ -199,12 +199,12 @@ def control(direction, angle=None):
 			print("start_angle: ", start_angle, "current angle: ", \
 			round(local.lr_imu_angle), "distance: ", round(distance, 2), \
 			 "counterFL: ", local.counterFL.value, "counterBR: ",local.counterBR.value)
-			if local.lr_imu_angle - start_angle >= max_diff: # this mean heading is $
+			if local.lr_imu_angle - start_angle >= local.max_diff: # this mean heading is $
 				print("leaning right")
 				pin31 = loco.duty - left_adjustment
 				pin37 = loco.duty + right_adjustment
 				loco.drive([pin31, 0, 0, pin37]) # speed up right wheels
-			elif local.lr_imu_angle - start_angle <= -max_diff: # if robot is leanin$
+			elif local.lr_imu_angle - start_angle <= -local.max_diff: # if robot is leanin$
 				print("leaning left")
 				pin31 = loco.duty  + left_adjustment
 				pin37 = loco.duty - right_adjustment
@@ -243,53 +243,73 @@ def main():
 	### loop2: start ###
 
 	print("starting at: ", local.x, local.y)
+	with local.imu_angle_lock:
+		local.prior_imu_angle = local.imu_angle
+	print("pointed at: ", local.prior_imu_angle)
 
 	targ_x = float(input("enter x target: "))
 	targ_y = float(input("enter y target: "))
 	turn_angle , distance = local.get_angle_dist(targ_x, targ_y)
+	turn_angle = -45
 	print("turn angle is: ", turn_angle)
+	time.sleep(2)
+
 	# turn in this while loop
 	while True:
-		if turn_angle >= 0: # if we want to turn right
-			loco.drive([loco.duty_turn, 0, loco.duty_turn, 0])
+		if turn_angle == 0.0:
+			print("turn_angle is 0.0, breaking out of turning loop")
+			time.sleep(1)
+			break
+		elif turn_angle >= 0: # if we want to turn right
+			loco.drive([loco.duty_turn + 10, 0, loco.duty_turn + 8, 0])
 			with local.imu_angle_lock:
 				local.lr_imu_angle = local.imu_angle
+			print("lr_imu_angle: ", local.lr_imu_angle)
 			if local.imu_angle >= turn_angle:
 				loco.drive([0, 0, 0, 0]) # stop turning
 				break
-		elif turn_angle <= 0: # if we want to turn right
-			loco.drive([0, loco.duty_turn, 0, loco.duty_turn])
+		elif turn_angle <= 0: # if we want to turn left
+			loco.drive([0, loco.duty_turn + 8, 0, loco.duty_turn + 5])
 			with local.imu_angle_lock:
 				local.lr_imu_angle = local.imu_angle
+			print("lr_imu_angle: ", local.lr_imu_angle)
 			if local.imu_angle <= turn_angle:
 				loco.drive([0, 0, 0, 0]) # stop turning
 				break
 
-	loco.drive([loco.duty, 0, 0, loco.duty])
 	i = 0
+	print("\nresetting FL, BR tick count to: ", local.reset_tick_count())
+	with local.imu_angle_lock:
+		start_angle = local.imu_angle
+	print("before driving straight, record the reference angle: ", start_angle)
+	current_distance = 0
+	print("current_distance: ", current_distance)
+	time.sleep(2)
+	loco.drive([loco.duty, 0, 0, loco.duty])
+
 	# drive forward in this while loop
 	while True:
 		with local.imu_angle_lock:
 			local.lr_imu_angle = local.imu_angle
-		print("start_angle: ", start_angle, "current angle: ", \
-		round(local.lr_imu_angle), "distance: ", round(distance, 2), \
+		print("current angle: ", round(local.lr_imu_angle), "current_distance: ",\
+		current_distance, " target_distance: ", round(distance, 2), \
 		"counterFL: ", local.counterFL.value, "counterBR: ", \
 		local.counterBR.value)
-		if local.lr_imu_angle - start_angle >= max_diff: # if robot leans right
+		if local.lr_imu_angle - start_angle >= local.max_diff: # if robot leans right
 			print("leaning right")
 			pin31 = loco.duty - local.left_adjust
 			pin37 = loco.duty + local.right_adjust
 			loco.drive([pin31, 0, 0, pin37]) # speed up right wheels
-		elif local.lr_imu_angle - start_angle <= -max_diff: # if robot leans left
+		elif local.lr_imu_angle - start_angle <= -local.max_diff: # if robot leans left
 			print("leaning left")
 			pin31 = loco.duty  + local.left_adjust
 			pin37 = loco.duty - local.right_adjust
 			loco.drive([pin31, 0, 0, pin37]) # speed up left wheels
-		distance = local.tick_2_distance(local.counterFL.value) # check dist traveled
-		if i % 5 == 0:
-			current_distance = local.tick_2_distance(\
-				local.counterFL.value)
-		if current_distance >= distance:
+		#current_distance = local.tick_2_distance(local.counterFL.value) # check dist traveled
+		if i % 2 == 0:
+			tick_avg = (local.counterFL.value + local.counterBR.value) / 2
+			current_distance = local.tick_2_distance(tick_avg)
+		if current_distance + .28 >= distance:
 			loco.drive([0, 0, 0, 0])
 			break
 		i += 1
@@ -307,15 +327,15 @@ def main():
 
 
 	order = ['r', 'g', 'b', 'r', 'g', 'b', 'r', 'g', 'b']
-	for color in order:
+#	for color in order:
 
-		green_edged = perception.detect_color(hsv_frame, green_lower, green_upper)
-		cv.imshow('green_edged', green_edged)
-		cv.imshow('frame', frame)
-		green_contours, cx, cy = perception.detect_contours(green_edged, frame)
-		cv.imshow('green_contours', green_contours)
-		cv.waitKey(0)
-		cv.destroyAllWindows()
+#		green_edged = perception.detect_color(hsv_frame, green_lower, green_upper)
+#		cv.imshow('green_edged', green_edged)
+#		cv.imshow('frame', frame)
+#		green_contours, cx, cy = perception.detect_contours(green_edged, frame)
+#		cv.imshow('green_contours', green_contours)
+#		cv.waitKey(0)
+#		cv.destroyAllWindows()
 
 
 if __name__ == "__main__":

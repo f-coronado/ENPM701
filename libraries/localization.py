@@ -111,14 +111,14 @@ class Localization:
 		return self.counterFL.value, self.counterBR.value
 
 	def reset_tick_count(self):
-		self.counterBR = 0
-		self.counterFL = 0
+		self.counterBR.value = 0
+		self.counterFL.value = 0
 		self.priorFL = 0
 		self.priorBR = 0
-		return self.counterBR, self.counterFL
+		return self.counterBR.value, self.counterFL.value
 
 	def tick_2_distance(self, ticks):
-		distance = (ticks.value / 4687) * 3.28084 # distance in meters, there are 4687 ticks/m
+		distance = (ticks / 4687) * 3.28084 # distance in meters, there are 4687 ticks/m
 		return distance
 
 	def angle_2_ticks(self, angle):
@@ -157,9 +157,9 @@ class Localization:
 			with self.imu_angle_lock:
 				if (self.ser.in_waiting > 0):
 					cnt += 1
-					line = self.ser.readline().decode().strip()
-
-					if line:
+					line = self.ser.readline()
+					#print("get_imu_angle line: ", line)
+					if cnt >= 10:
 						values = line.split()
 						if len(values) >= 3:
 							line = self.ser.readline()

@@ -1,3 +1,4 @@
+import RPi.GPIO as GPIO
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,6 +20,10 @@ class Perception:
 		self.red_upper = (183, 170, 255) # values from session1
 		self.cap = cv.VideoCapture(0)
 		self.codec = cv.VideoWriter_fourcc(*'mp4v')
+		GPIO.setmode(GPIO.BOARD)
+		GPIO.setup(16, GPIO.OUT)
+		GPIO.setup(18, GPIO.IN)
+
 
 	def get_pic(self):
 		ret, frame = self.cap.read()
