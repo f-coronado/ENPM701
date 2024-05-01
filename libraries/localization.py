@@ -176,23 +176,25 @@ class Localization:
 							values = values[1:]
 							values[0] = values[0][:-5]
 							values[1] = values[1][:-5]
-							x = float(values[0])
+							x = -float(values[0])
 							y = float(values[1])
 							z = float(values[2])
 							if (x >= 180):
 								self.imu_angle = x - 360
+							elif x < -180:
+								self.imu_angle = x + 360
 							else:
 								self.imu_angle = x
 
 	def get_angle_dist(self, x, y):
-		print("current location is x:", self.x, "y:",  self.y, "feet")
+		print("\ncurrent location is x:", self.x, "y:",  self.y, "feet")
 		print("currenty pointed at: ", self.lr_imu_angle, "degrees")
 
 		dx = x - self.x
 		dy = y - self.y
 		target_angle = math.degrees(math.atan2(dy,dx))
 		print("target_angle: ", target_angle)
-		turn_angle = self.lr_imu_angle - target_angle
+		turn_angle = target_angle - self.lr_imu_angle
 		print("turn_angle: ", turn_angle)
 		time.sleep(2)
 

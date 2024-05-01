@@ -6,6 +6,7 @@ import time
 from libraries.perception import Perception
 from libraries.localization import Localization
 from libraries.locomotion import Locomotion
+import math
 
 def relocalize():
 	print("robot thinks it's at (x, y): ", local.x, local.y)
@@ -33,7 +34,7 @@ def relocalize():
 	elif local.x <= 2: # if robot is near left wall
 		with local.imu_angle_lock:
 			local.lr_imu_angle = local.imu_angle # check what direction we're looking
-		if 0 <= local.lr_imu_angle <= 180 # if robot is facing anywhere in 
+		if 0 <= local.lr_imu_angle <= 180: # if robot is facing anywhere in 
 						  # NE or NW quadrant
 			local.drive([0, loco.duty_turn + 8, 0, loco.duty_turn + 5]) # turn left
 			while True: # turn until..
@@ -41,7 +42,7 @@ def relocalize():
 					local.lr_imu_angle = local.imu_angle
 				if local.lr_imu_angle >= 180: # facing left wall so break
 					break
-		elif -180 <= local.lr_imu_angle <= 0 # if robot is facing anywhere in 
+		elif -180 <= local.lr_imu_angle <= 0: # if robot is facing anywhere in 
 						   # SE or SW quadrant
 			local.drive([loco.duty_turn + 10, 0, loco.duty_turn + 8, 0]) # turn right
 			while True: # turn until..
@@ -57,7 +58,7 @@ def relocalize():
 	elif local.x >= 8: # if robot is near right wall
 		with local.imu_angle_lock:
 			local.lr_imu_angle = local.imu_angle # check what direction we're looking
-		if 0 <= local.lr_imu_angle <= 180 # if robot is facing anywhere in NE quadrant
+		if 0 <= local.lr_imu_angle <= 180: # if robot is facing anywhere in NE quadrant
 						  # or NW quadrant
 			local.drive([loco.duty_turn + 8, 0, loco.duty_turn + 5, 0]) # turn right
 			while True: # turn until..
@@ -65,7 +66,7 @@ def relocalize():
 					local.lr_imu_angle = local.imu_angle
 				if local.lr_imu_angle <= 1: # facing right wall so break
 					break
-		elif -180 <= local.lr_imu_angle <= 0 # if robot is facing anywhere in 
+		elif -180 <= local.lr_imu_angle <= 0: # if robot is facing anywhere in 
 						     # SE or SW quadrant
 			local.drive([0, loco.duty_turn + 8, 0, loco.duty_turn + 5]) # turn left
 			while True: # turn until..
@@ -250,41 +251,7 @@ def look4color(color):
 
 
 
-def control(direction, angle=None):
 
-		if direction == "forward": # ie if we are not turning
-			# first retrieve initial heading so we keep going that angle
-			while True:
-					with local.imu_angle_lock:
-						start_angle = round(local.imu_angle, 2)
-					print("starting angle: ", start_angle)
-					start_angle = str(start_angle)
-					if '.' in start_angle:
-						decimal_index = start_angle.index('.')
-						num_decimals = len(start_angle) - decimal_index - 1
-						if num_decimals >= 1:
-							break
-		start_angle = float(start_angle)
-		while True:
-			with local.imu_angle_lock:
-				local.lr_imu_angle = local.imu_angle
-			print("start_angle: ", start_angle, "current angle: ", \
-			round(local.lr_imu_angle), "distance: ", round(distance, 2), \
-			 "counterFL: ", local.counterFL.value, "counterBR: ",local.counterBR.value)
-			if local.lr_imu_angle - start_angle >= local.max_diff: # this mean heading is $
-				print("leaning right")
-				pin31 = loco.duty - left_adjustment
-				pin37 = loco.duty + right_adjustment
-				loco.drive([pin31, 0, 0, pin37]) # speed up right wheels
-			elif local.lr_imu_angle - start_angle <= -local.max_diff: # if robot is leanin$
-				print("leaning left")
-				pin31 = loco.duty  + left_adjustment
-				pin37 = loco.duty - right_adjustment
-				loco.drive([pin31, 0, 0, pin37]) # speed up right wheels
-				distance = local.tick_2_distance(local.counterFL) # check h$
-			if distance >= 2: # if traveled 2m break
-				print("traveled: ", distance, "meters")
-			break
 
 def main():
 
@@ -334,25 +301,28 @@ def main():
 			print("turn_angle is 0.0, breaking out of turning loop")
 			time.sleep(1)
 			break
-		elif turn_angle >= 0: # if we want to turn right
+		elif turn_angle <= 0: # if we want to turn right
 			loco.drive([loco.duty_turn + 10, 0, loco.duty_turn + 8, 0])
 			with local.imu_angle_lock:
 				local.lr_imu_angle = local.imu_angle
-			print("lr_imu_angle: ", local.lr_imu_angle)
-			if local.imu_angle >= turn_angle:
+			print("lr_imu_angle: ", local.lr_imu_angle, "need to turn to: ", \
+				turn_angle)
+			if local.imu_angle <= turn_angle: #current angle is more negative
 				loco.drive([0, 0, 0, 0]) # stop turning
 				break
-		elif turn_angle <= 0: # if we want to turn left
+		elif turn_angle >= 0: # if we want to turn left
 			loco.drive([0, loco.duty_turn + 8, 0, loco.duty_turn + 5])
 			with local.imu_angle_lock:
 				local.lr_imu_angle = local.imu_angle
-			print("lr_imu_angle: ", local.lr_imu_angle)
-			if local.imu_angle <= turn_angle:
+			print("lr_imu_angle: ", local.lr_imu_angle, "need to turn to: ", \
+				turn_angle)
+			if local.imu_angle >= turn_angle - 4: # check this
 				loco.drive([0, 0, 0, 0]) # stop turning
 				break
 
 	i = 0
 	print("\nresetting FL, BR tick count to: ", local.reset_tick_count())
+	time.sleep(3)
 	with local.imu_angle_lock:
 		start_angle = local.imu_angle
 	print("before driving straight, record the reference angle: ", start_angle)
@@ -370,12 +340,12 @@ def main():
 		"counterFL: ", local.counterFL.value, "counterBR: ", \
 		local.counterBR.value, "x:", local.x, "y: ", local.y)
 		#print("distance from wall: ", round(percep.measure_distance(), 2))
-		if local.lr_imu_angle - start_angle >= local.max_diff: # if robot leans right
+		if local.lr_imu_angle - start_angle <= -local.max_diff: # if robot leans right
 			print("leaning right")
 			pin31 = loco.duty - local.left_adjust
 			pin37 = loco.duty + local.right_adjust
 			loco.drive([pin31, 0, 0, pin37]) # speed up right wheels
-		elif local.lr_imu_angle - start_angle <= -local.max_diff: # if robot leans left
+		elif local.lr_imu_angle - start_angle >= local.max_diff: # if robot leans left
 			print("leaning left")
 			pin31 = loco.duty  + local.left_adjust
 			pin37 = loco.duty - local.right_adjust
@@ -393,6 +363,11 @@ def main():
 			loco.drive([0, 0, 0, 0])
 			break
 		i += 1
+	print("local.lr_imu_angle: ", local.lr_imu_angle)
+	local.x = local.x + distance * math.cos(math.radians(local.lr_imu_angle))
+	local.y = local.y + distance * math.sin(math.radians(local.lr_imu_angle))
+	print("distance traveled was: ", distance)
+	print("local.x: ", local.x, "local.y: ", local.y)
 
 
 	### loop3: retrieve and deliver ###
