@@ -18,9 +18,10 @@ class Locomotion:
 		self.gripper_pwm = GPIO.PWM(36, 50) # setup pin 36 with 50Hz
 		self.gripper_pwm.start(3.5) # start gripper in closed position
 
-		self.duty = 30
-		self.duty_turn = 63 # 35 works best on desktop, 70 works best on floor
-		self.reduce = 10
+		self.duty = 30 # 30 works best in class
+		self.duty_turn = 40 # 35 works best on desktop, 70 works best on floor
+					# in class this was 63
+		self.reduce = 10 # 10 worked in class
 
 		#self.cap = cv.VideoCapture(0)
 		#self.codec = cv.VideoWriter_fourcc(*'mp4v')

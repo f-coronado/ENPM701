@@ -37,11 +37,16 @@ class Localization:
 
 		# intialize encoder pose
 		# initialize x and y to be at center of landing zone
-		self.x = 2 # .3028 is a conversion factor to meters
-		self.y = 2
+		self.x = 1 # .3028 is a conversion factor to meters
+		self.y = 1
 		self.angle = 0
 		self.x_pos = [self.x]
 		self.y_pos = [self.y]
+
+		self.right_x_wall = 10 # update this
+		self.left_x_wall = 0
+		self.top_y_wall = 10
+		self.bottom_y_wall = 0
 
 		# intialize imu angles
 		self.x_imu = []
@@ -186,14 +191,17 @@ class Localization:
 		dx = x - self.x
 		dy = y - self.y
 		target_angle = math.degrees(math.atan2(dy,dx))
-		turn_angle = target_angle - self.lr_imu_angle
+		print("target_angle: ", target_angle)
+		turn_angle = self.lr_imu_angle - target_angle
+		print("turn_angle: ", turn_angle)
+		time.sleep(2)
 
-		if target_angle <= -180:
-			turn_angle += 360
-			print("target_angle < -180, normalizing to: ", turn_angle)
-		elif target_angle > 180:
-			turn_angle -= 180
-			print("target_angle > 180, normalizing to: ", turn_angle)
+		#if target_angle <= -180:
+		#	turn_angle += 360
+		#	print("target_angle < -180, normalizing to: ", turn_angle)
+		#elif target_angle > 180:
+			#turn_angle -= 180
+			#print("target_angle > 180, normalizing to: ", turn_angle)
 
 		distance = math.sqrt(dx**2 + dy **2)
 		print("distance to travel is ", distance, "feet")

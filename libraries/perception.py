@@ -21,8 +21,33 @@ class Perception:
 		self.cap = cv.VideoCapture(0)
 		self.codec = cv.VideoWriter_fourcc(*'mp4v')
 		GPIO.setmode(GPIO.BOARD)
-		GPIO.setup(16, GPIO.OUT)
-		GPIO.setup(18, GPIO.IN)
+		self.trig = 16
+		self.echo = 18
+		GPIO.setup(self.trig, GPIO.OUT)
+		GPIO.setup(self.echo, GPIO.IN)
+
+	def measure_distance(self):
+		GPIO.output(self.trig, False)
+		time.sleep(0.01)
+		# generate self.trigger pulse
+		GPIO.output(self.trig, True)
+		time.sleep(0.00001)
+		GPIO.output(self.trig, False)
+
+		# generate self.echo time signal
+		while GPIO.input(self.echo) == 0:
+			pulse_start = time.time()
+
+		while GPIO.input(self.echo) == 1:
+			pulse_end = time.time()
+
+		pulse_duration = pulse_end - pulse_start
+
+		# convert time to distance
+		distance = (pulse_duration * 17150) / 2.54
+		distance = round(distance, 2)
+
+		return distance # inches
 
 
 	def get_pic(self):
@@ -138,6 +163,3 @@ class Perception:
 				break
 		cv.destroyAllWindows()
 		return data
-
-
-#	def trackblock(

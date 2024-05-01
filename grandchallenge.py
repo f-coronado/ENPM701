@@ -7,6 +7,78 @@ from libraries.perception import Perception
 from libraries.localization import Localization
 from libraries.locomotion import Locomotion
 
+def relocalize():
+	print("robot thinks it's at (x, y): ", local.x, local.y)
+	if local.x <= 4 and local.y >= 6: # if we're in construction zone..
+		return
+
+	elif local.x <= 5: # if robot is closer to left wall
+		with local.imu_angle_lock:
+			local.lr_imu_angle = local.imu_angle # check what direction we're looking
+		print("current angle: ", local.lr_imu_angle)
+		time.sleep(1)
+		loco.drive([0, loco.duty_turn + 8, 0, loco.duty_turn + 5]) # turn left
+		while True:
+			with local.imu_angle_lock:
+				local.lr_imu_angle = local.imu_angle # check what direction we're lookin
+			if local.lr_imu_angle >= 179: # turn until we face left wall
+				break 
+		loco.drive([0, 0, 0, 0]) # stop turning
+		time.sleep(1)
+		loco.drive([loco.duty, 0, 0, loco.duty]) # drive straight to left wall
+		while True:
+			if local.x <= 1.95: # if we're within 2 feet of the left wall
+				break
+
+	elif local.x <= 2: # if robot is near left wall
+		with local.imu_angle_lock:
+			local.lr_imu_angle = local.imu_angle # check what direction we're looking
+		if 0 <= local.lr_imu_angle <= 180 # if robot is facing anywhere in 
+						  # NE or NW quadrant
+			local.drive([0, loco.duty_turn + 8, 0, loco.duty_turn + 5]) # turn left
+			while True: # turn until..
+				with local.imu_angle_lock:
+					local.lr_imu_angle = local.imu_angle
+				if local.lr_imu_angle >= 180: # facing left wall so break
+					break
+		elif -180 <= local.lr_imu_angle <= 0 # if robot is facing anywhere in 
+						   # SE or SW quadrant
+			local.drive([loco.duty_turn + 10, 0, loco.duty_turn + 8, 0]) # turn right
+			while True: # turn until..
+				with local.imu_angle_lock:
+					local.lr_imu_angle = local.imu_angle
+				if local.lr_imu_angle <= -180: # facing left wall so break
+					break
+		loco.drive([0, 0, 0, 0])
+		time.sleep(2)
+		local.x = percep.measure_distance()
+		print("relocalizing x to: ", local.x)
+
+	elif local.x >= 8: # if robot is near right wall
+		with local.imu_angle_lock:
+			local.lr_imu_angle = local.imu_angle # check what direction we're looking
+		if 0 <= local.lr_imu_angle <= 180 # if robot is facing anywhere in NE quadrant
+						  # or NW quadrant
+			local.drive([loco.duty_turn + 8, 0, loco.duty_turn + 5, 0]) # turn right
+			while True: # turn until..
+				with local.imu_angle_lock:
+					local.lr_imu_angle = local.imu_angle
+				if local.lr_imu_angle <= 1: # facing right wall so break
+					break
+		elif -180 <= local.lr_imu_angle <= 0 # if robot is facing anywhere in 
+						     # SE or SW quadrant
+			local.drive([0, loco.duty_turn + 8, 0, loco.duty_turn + 5]) # turn left
+			while True: # turn until..
+				with local.imu_angle_lock:
+					local.lr_imu_angle = local.imu_angle
+				if local.lr_imu_angle <= -180: # facing left wall so break
+					break
+		loco.drive([0, 0, 0, 0])
+		time.sleep(2)
+		local.x = percep.measure_distance()
+		print("relocalizing x to: ", local.x)
+
+
 def get_object(color, frame):
 		print("\ngetting obj")
 		start = time.time()
@@ -246,11 +318,13 @@ def main():
 	with local.imu_angle_lock:
 		local.prior_imu_angle = local.imu_angle
 	print("pointed at: ", local.prior_imu_angle)
-
+	#for i in range (20):
+	#	init_dist = percep.measure_distance()
+	#	print("wall is at a distance of: ", init_dist, "cm")
 	targ_x = float(input("enter x target: "))
 	targ_y = float(input("enter y target: "))
 	turn_angle , distance = local.get_angle_dist(targ_x, targ_y)
-	turn_angle = -45
+#	turn_angle = -45
 	print("turn angle is: ", turn_angle)
 	time.sleep(2)
 
@@ -291,10 +365,11 @@ def main():
 	while True:
 		with local.imu_angle_lock:
 			local.lr_imu_angle = local.imu_angle
-		print("current angle: ", round(local.lr_imu_angle), "current_distance: ",\
-		current_distance, " target_distance: ", round(distance, 2), \
+		print("curr angle: ", round(local.lr_imu_angle, 4), "curr_dist: ",\
+		round(current_distance, 2), " target_dist: ", round(distance, 2), \
 		"counterFL: ", local.counterFL.value, "counterBR: ", \
-		local.counterBR.value)
+		local.counterBR.value, "x:", local.x, "y: ", local.y)
+		#print("distance from wall: ", round(percep.measure_distance(), 2))
 		if local.lr_imu_angle - start_angle >= local.max_diff: # if robot leans right
 			print("leaning right")
 			pin31 = loco.duty - local.left_adjust
@@ -305,10 +380,15 @@ def main():
 			pin31 = loco.duty  + local.left_adjust
 			pin37 = loco.duty - local.right_adjust
 			loco.drive([pin31, 0, 0, pin37]) # speed up left wheels
-		#current_distance = local.tick_2_distance(local.counterFL.value) # check dist traveled
-		if i % 2 == 0:
+		if i % 2 == 0: # update current distance every other iteration
 			tick_avg = (local.counterFL.value + local.counterBR.value) / 2
 			current_distance = local.tick_2_distance(tick_avg)
+		# once we start to get within 2 feet of the x walls, and we're pointed at it
+		# we should measure distance to relocalize the x coordinate
+		if local.right_x_wall - local.x <= 2 and -.5 <= local.lr_imu_angle <= .5: # once we get within 2 feet of the right wall
+			dist = percep.measure_distance()
+			print("wall is at a distance of: ", init_dist, "cm")
+			local.x = local.right_x_wall - dist
 		if current_distance + .28 >= distance:
 			loco.drive([0, 0, 0, 0])
 			break
