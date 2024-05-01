@@ -194,9 +194,8 @@ class Localization:
 		dy = y - self.y
 		target_angle = math.degrees(math.atan2(dy,dx))
 		print("target_angle: ", target_angle)
-		turn_angle = target_angle - self.lr_imu_angle
-		print("turn_angle: ", turn_angle)
-		time.sleep(2)
+		#turn_angle = target_angle - self.lr_imu_angle
+		#print("turn_angle: ", turn_angle)
 
 		#if target_angle <= -180:
 		#	turn_angle += 360
@@ -207,9 +206,9 @@ class Localization:
 
 		distance = math.sqrt(dx**2 + dy **2)
 		print("distance to travel is ", distance, "feet")
-		print("need to turn by: ", turn_angle)
-
-		return turn_angle, distance
+		print("need to turn to: ", target_angle)
+		target_angle = round(target_angle, 3)
+		return target_angle, distance
 
 
 

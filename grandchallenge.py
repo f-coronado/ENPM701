@@ -8,6 +8,17 @@ from libraries.localization import Localization
 from libraries.locomotion import Locomotion
 import math
 
+
+### intialization ###
+
+# classes
+percep = Perception()
+print('loaded perception')
+local = Localization()
+print('loaded localization')
+loco = Locomotion()
+print('loaded locomotion')
+
 def relocalize():
 	print("robot thinks it's at (x, y): ", local.x, local.y)
 	if local.x <= 4 and local.y >= 6: # if we're in construction zone..
@@ -250,73 +261,44 @@ def look4color(color):
 				break
 
 
-
-
-
-def main():
-
-	### intialization ###
-
-	# classes
-	percep = Perception()
-	print('loaded perception')
-	local = Localization()
-	print('loaded localization')
-	loco = Locomotion()
-	print('loaded locomotion')
-
-	# video parameters
-	#cap = cv.VideoCapture(0)
-	fourcc = cv.VideoWriter_fourcc(*'mp4v')
-	fps = 10
-	out_video = cv.VideoWriter("grand_challenge.mp4", fourcc, fps, (640, 480), isColor=True)
-
-	### loop1: look for QR code ###
-#	while True:
-#		print("looking for qr code..")
-#		data = percep.detect_qr_code()
-#		if data == "ENPM701":
-#			print("starting grand challenge!")
-#			break
-
-	### loop2: start ###
-
+def drive2(targ_x, targ_y):
 	print("starting at: ", local.x, local.y)
 	with local.imu_angle_lock:
 		local.prior_imu_angle = local.imu_angle
 	print("pointed at: ", local.prior_imu_angle)
-	#for i in range (20):
-	#	init_dist = percep.measure_distance()
-	#	print("wall is at a distance of: ", init_dist, "cm")
-	targ_x = float(input("enter x target: "))
-	targ_y = float(input("enter y target: "))
-	turn_angle , distance = local.get_angle_dist(targ_x, targ_y)
-#	turn_angle = -45
-	print("turn angle is: ", turn_angle)
-	time.sleep(2)
+	target_angle , distance = local.get_angle_dist(targ_x, targ_y)
+	print("target angle is: ", target_angle)
+	print("abs(target_angle -local.lr_imu_angle: ", \
+			abs(target_angle - local.lr_imu_angle))
+	while True:
+		ans = input("want to continue? enter y or n: ")
+		if ans == 'y':
+			break
 
 	# turn in this while loop
 	while True:
-		if turn_angle == 0.0:
-			print("turn_angle is 0.0, breaking out of turning loop")
+		if abs(target_angle - local.lr_imu_angle - 2) <= 1:
+			print("pointed at ", target_angle ,\
+				"breaking out of turning loop")
+			loco.drive([0, 0, 0, 0])
 			time.sleep(1)
 			break
-		elif turn_angle <= 0: # if we want to turn right
+		elif target_angle <= 0: # if we want to turn right
 			loco.drive([loco.duty_turn + 10, 0, loco.duty_turn + 8, 0])
 			with local.imu_angle_lock:
 				local.lr_imu_angle = local.imu_angle
-			print("lr_imu_angle: ", local.lr_imu_angle, "need to turn to: ", \
-				turn_angle)
-			if local.imu_angle <= turn_angle: #current angle is more negative
+			print("lr_imu_angle: ", local.lr_imu_angle, "need to turn right to: ", \
+				target_angle)
+			if abs(local.imu_angle - target_angle) <= 1: #current angle is more negative
 				loco.drive([0, 0, 0, 0]) # stop turning
 				break
-		elif turn_angle >= 0: # if we want to turn left
+		elif target_angle > 0: # if we want to turn left
 			loco.drive([0, loco.duty_turn + 8, 0, loco.duty_turn + 5])
 			with local.imu_angle_lock:
 				local.lr_imu_angle = local.imu_angle
-			print("lr_imu_angle: ", local.lr_imu_angle, "need to turn to: ", \
-				turn_angle)
-			if local.imu_angle >= turn_angle - 4: # check this
+			print("lr_imu_angle: ", local.lr_imu_angle, "need to turn left to: ", \
+				target_angle)
+			if abs(local.imu_angle - target_angle - 4) <= 1: # check this
 				loco.drive([0, 0, 0, 0]) # stop turning
 				break
 
@@ -328,17 +310,24 @@ def main():
 	print("before driving straight, record the reference angle: ", start_angle)
 	current_distance = 0
 	print("current_distance: ", current_distance)
-	time.sleep(2)
-	loco.drive([loco.duty, 0, 0, loco.duty])
+
+	while True:
+		ans = input("want to continue? enter y or n: ")
+		if ans == 'y':
+			break
+	loco.drive([loco.duty, 0, 0, loco.duty]) # drive straight
 
 	# drive forward in this while loop
 	while True:
 		with local.imu_angle_lock:
 			local.lr_imu_angle = local.imu_angle
+		# update position as we go?
+		#local.x = current_distance * math.cos(math.radians(local.lr_imu_angle))
+		#local.y = current_distance * math.sin(math.radians(local.lr_imu_angle))
 		print("curr angle: ", round(local.lr_imu_angle, 4), "curr_dist: ",\
 		round(current_distance, 2), " target_dist: ", round(distance, 2), \
 		"counterFL: ", local.counterFL.value, "counterBR: ", \
-		local.counterBR.value, "x:", local.x, "y: ", local.y)
+		local.counterBR.value, "x:", round(local.x, 3), "y: ", round(local.y, 3))
 		#print("distance from wall: ", round(percep.measure_distance(), 2))
 		if local.lr_imu_angle - start_angle <= -local.max_diff: # if robot leans right
 			print("leaning right")
@@ -367,7 +356,36 @@ def main():
 	local.x = local.x + distance * math.cos(math.radians(local.lr_imu_angle))
 	local.y = local.y + distance * math.sin(math.radians(local.lr_imu_angle))
 	print("distance traveled was: ", distance)
-	print("local.x: ", local.x, "local.y: ", local.y)
+	print("x: ", local.x, "y: ", local.y)
+
+
+
+
+def main():
+
+
+	# video parameters
+	#cap = cv.VideoCapture(0)
+	fourcc = cv.VideoWriter_fourcc(*'mp4v')
+	fps = 10
+	out_video = cv.VideoWriter("grand_challenge.mp4", fourcc, fps, (640, 480), isColor=True)
+
+	### loop1: look for QR code ###
+#	while True:
+#		print("looking for qr code..")
+#		data = percep.detect_qr_code()
+#		if data == "ENPM701":
+#			print("starting grand challenge!")
+#			break
+
+	### loop2: start ###
+	while True:
+		x  = int(input("enter x-coord: "))
+		y = int(input("enter y-coord: "))
+		drive2(x, y)
+		retry = input("enter y or n to continue: ")
+		if retry == 'n':
+			break
 
 
 	### loop3: retrieve and deliver ###
