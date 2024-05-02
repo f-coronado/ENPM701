@@ -127,10 +127,10 @@ class Perception:
 		#	return True
 		#elif w >= 120 and h >= 140:
 		#	return True
-		if w > 100 and h > 145:
+		if w > 220 and h > 130:
 			return "grip"
 
-		elif w >= 50 and h >= 76:
+		elif w >= 70 and h >= 100:
 			return "open"
 		else:
 			return False

@@ -7,10 +7,12 @@ import time
 def main2():
 	perception = Perception()
 	frame = perception.get_pic()
-	edged = perception.detect_color(frame, "green")
+	edged = perception.detect_color(frame, "red")
 	cv.imshow('edged: ', edged)
+	#print("result of detect_contours: ", perception.detect_contours(edged, frame), "is of type:" , type(perception.detect_contours(edged, frame)))
+	contours, _, _, edged, _, _ = perception.detect_contours(edged, frame)
+	cv.imshow("contours", contours)
 	cv.waitKey(0)
-	print("result of detect_contours: ", perception.detect_contours(edged, frame), "is of type:" , type(perception.detect_contours(edged, frame)))
 	cv.destroyAllWindows()
 	return None
 
@@ -48,5 +50,5 @@ def main():
 
 
 if __name__ == "__main__":
-	main()
-	#main2()
+	#main()
+	main2()

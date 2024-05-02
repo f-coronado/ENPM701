@@ -92,6 +92,8 @@ def relocalize():
 
 
 def get_object(color, frame):
+		with local.imu_angle_lock:
+			start_angle = local.imu_angle
 		print("\ngetting obj")
 		start = time.time()
 		edged_frame = percep.detect_color(frame, color)
@@ -99,65 +101,94 @@ def get_object(color, frame):
 		end = time.time()
 		print("time taken to capture edge and contour within get_object", end-start)
 
+		current_distance = 0
+		print("tick count before driving straight in get_obj: ", local.counterFL.value, \
+			local.counterBR.value)
+		loco.drive([loco.duty + 8, 0, 0, loco.duty + 8]) # drive straight to obj
 		while True:
 			frame = percep.get_pic()
-			loco.drive([loco.duty, 0, 0, loco.duty]) # drive straight to obj
 			edged_frame = percep.detect_color(frame, color)
 			frame, cx, cy, edged_frame, w, h = percep.detect_contours(edged_frame, frame)
-			print("cx: ", cx, "angle2center: ", percep.get_angle2center(cx))
-			if percep.get_angle2center(cx) >= 7: # if obj to right more than 7 degrees
-				print("obj is to right ", cx, "degrees")
-				# turn right 
-				loco.drive([loco.duty_turn - 10, 0, loco.duty_turn - 10, 0])
-				while True:
-					frame = percep.get_pic()
-					edged = percep.detect_color(color)
-					frame, cx, cy, edged, w, h = perception.detect_contours(edged, frame)
-					if cx <= 7:
-						break
-			elif percep.get_angle2center(cx) <= -7: # if obj to left more than 7 degrees
-				print("obj is to left ", cx, "degrees")
-				# turn left
-				loco.drive([0, loco.duty_turn - 10, 0,  loco.duty_turn - 10])
-				while True:
-					frame = percep.get_pic()
-					edged = percep.detect_color(color)
-					frame, cx, cy, edged, w, h = perception.detect_contours(edged, frame)
-					if percep.get_angle2center(cx) >= -7:
-						break
-			cv.imshow("frame: ", frame)
-			cv.waitKey(30)
-			if percep.object_check(w, h) is "open": # obj is near
-				print("object is near, opening gripper")
-				loco.drive([0, 0, 0, 0]) # stop
-				loco.grip("open") # open gripper
-				break
+			print("angle2center: ", percep.get_angle2center(cx), \
+				"obj width: ", w, "height: ",h)
+			if w >= 56 and h >= 80: # start using imu to steer
+				if percep.get_angle2center(cx) >= 5: # if obj to right more than 7 degrees
+					print("obj is to the right ", cx, "degrees")
+					# stop recenter then drive to it again
+					loco.drive([0, 0, 0, 0]) # stop
+					time.sleep(1)
+					look4color(color, 0, 135) # recenter object
+					loco.drive([0, 0, 0, 0]) # stop turning
+				elif percep.get_angle2center(cx) <= -5: # if obj to left more than 7 degrees
+					print("obj is to left ", cx, "degrees")
+					loco.drive([0, 0, 0, 0]) # stop
+					time.sleep(1)
+					look4color(color, 135, 0) # recenter object
+					loco.drive([0, 0, 0, 0]) # stop turning
+				loco.drive([loco.duty + 8, 0, 0, loco.duty + 8]) # drive straight
+
+				cv.imshow("get_object: ", frame)
+				cv.waitKey(30)
+				if percep.object_check(w, h) is "open": # obj is near
+					print("object is near, opening gripper")
+					loco.drive([0, 0, 0, 0]) # stop
+					loco.grip("open") # open gripper
+					break
+			else: # use imu to steer until close to obj then we'll switch to percep
+				with local.imu_angle_lock:
+					local.lr_imu_angle = local.imu_angle
+				# update position as we go?
+				#local.x = current_distance * math.cos(math.radians(local.lr_imu_angle))
+				#local.y = current_distance * math.sin(math.radians(local.lr_imu_angle))
+				print("curr angle: ", round(local.lr_imu_angle, 4), "curr_dist: ",\
+					round(current_distance, 2), "counterFL: ", \
+					local.counterFL.value, "counterBR: ", \
+					local.counterBR.value, "x:", round(local.x, 3), "y: ", \
+					round(local.y, 3))
+
+				current_distance = local.tick_2_distance(local.counterFL.value)
+		                #print("distance from wall: ", round(percep.measure_distance(), 2))
+				# if robot leans right
+				if local.lr_imu_angle - start_angle <= -local.max_diff: 
+					print("leaning right")
+					pin31 = loco.duty - local.left_adjust
+					pin37 = loco.duty + local.right_adjust
+					loco.drive([pin31, 0, 0, pin37]) # speed up right wheels
+				elif local.lr_imu_angle - start_angle >= local.max_diff: # if robot lea$
+					print("leaning left")
+					pin31 = loco.duty  + local.left_adjust
+					pin37 = loco.duty - local.right_adjust
+					loco.drive([pin31, 0, 0, pin37]) # speed up left wheels
 
 		print("obj should be close and centered enough by now")
+		while True:
+			ans = input("is object close enough and aligned?")
+			if ans == 'y':
+				break
 		# obj should be close and center enough by now
-		loco.drive([loco.duty, 0, 0, loco.duty])
+		loco.drive([loco.duty, 0, 0, loco.duty]) # drive straight
 		while True:
 			frame = percep.get_pic()
 			edged = percep.detect_color(frame, color)
 			frame, cx, cy, _, w, h = percep.detect_contours(edged, frame)
-			cv.imshow("frame", frame)
+			cv.imshow("get_object", frame)
 			cv.waitKey(30)
 			print("w: ", w, "h: ", h)
 			# if w > 100 and h > 145
 			#object is close enough so...
 			if percep.object_check(w, h) is "grip":
-				#print("object is within grasp")
-				#loco.drive([0, 0, 0, 0]) # stop
-				#loco.grip("open") # open before we drive object into gripper opening
-				#time.sleep(2)
-				#start = time.time()
+				print("object is within grasp")
+				while True:
+					ans = input("is object within grasp?: ")
+					if ans == 'y':
+						break
 
 				while True:
-					loco.drive([40, 0, 0, 40]) # drive to grab object
+					loco.drive([30, 0, 0, 30]) # drive to grab object
 					_, _ = local.get_tick_count() # update tick count
 					#print("driving into object to grasp")
 					# 3 inches = .0732m, and 4687 ticks/m
-					if local.counterFL >= .0762 * 4687:
+					if local.counterFL.value >= .0762 * 4687:
 						break
 				end = time.time()
 				print("time taken through while loop in get_object: ", end-start)
@@ -168,97 +199,121 @@ def get_object(color, frame):
 
 
 
-def look4color(color):
+def look4color(color, lt_angle, rt_angle):
+	print("\n called look4color!")
 
-		if color == "green":
-			lower = percep.green_lower
-			upper = percep.green_upper
-		elif color == "red":
-			lower = percep.red_lower
-			upper = percep.red_upper
-		elif color == "blue":
-			lower = percep.blue_lower
-			upper = percep.blue_upper
+	if color == "green":
+		lower = percep.green_lower
+		upper = percep.green_upper
+	elif color == "red":
+		lower = percep.red_lower
+		upper = percep.red_upper
+	elif color == "blue":
+		lower = percep.blue_lower
+		upper = percep.blue_upper
 
-		with local.imu_angle_lock:
-			local.prior_imu_angle = local.imu_angle
-		#print("initial angle: ", local.prior_imu_angle)
-		#time.sleep(3)
-		right_turn = 90
-		left_turn = 180
+	# update prior imu_angle
+	with local.imu_angle_lock:
+		local.prior_imu_angle = local.imu_angle
+	print("angle before turning left is: ", local.prior_imu_angle)
 
-		while True:
-			frame = percep.get_pic()
-			# turn right 90 degrees and look for the color obj
-			loco.drive([loco.duty_turn - loco,reduce, 0, loco.duty_turn - loco,reduce, 0])
-			# get edged frame
-			edged = percep.detect_color(frame, color)
-			# if we found the object
-			#if percep.detect_contours(edged, frame) is not None:
+	# start turning left
+	loco.drive([0, loco.duty_turn + 5, 0, loco.duty_turn + 5]) # check
+	while True:
+		frame = percep.get_pic() # look for obj
+		# check for object
+		edged = percep.detect_color(frame, color)
+		if lt_angle is None: # if we dont want to turn left
+			loco.drive([0, 0, 0, 0]) # stop turning left
+			break
+		elif percep.detect_contours(edged, frame) is not None:
 			frame, cx, cy, edged, w, h = percep.detect_contours(edged, frame)
-			#print("contours is not none")
+			if abs(percep.get_angle2center(cx)) <= 15:
+				# slow down
+				loco.drive([0, loco.duty_turn - 5, 0, loco.duty_turn - 5])
+
 			text = "obj is" + str(percep.get_angle2center(cx)) + "degrees from center"
 			frame = percep.write_on_frame(frame, text)
-			cv.imshow("contours: ", frame)
+			cv.imshow("look4color: ", frame)
 			cv.waitKey(30)
-			# and the obj is close to the center
-			#print("angle2center: ", percep.get_angle2center(cx))
+			print("angle2center: ", percep.get_angle2center(cx))
+			# if object is close to center
+			if abs(percep.get_angle2center(cx)) <= 2:
+				loco.drive([0, 0, 0, 0]) # stop
+				print("waiting before get_object")
+				# get obj angle
+				with local.imu_angle_lock:
+					local.lr_imu_angle = local.imu_angle
+				print("obj is at: ",local.lr_imu_angle, "degrees")
+				cv.imshow("look4color", frame)
+				while True:
+					ans = input("want to continue?")
+					if ans == 'y':
+						break
+				get_object(color, frame) # consider moving this out?
+
+		# get current angle
+		with local.imu_angle_lock:
+			local.lr_imu_angle = local.imu_angle
+		print("current angle: ", local.lr_imu_angle)
+
+		# if the bot has turned left > 180 degrees
+		if abs(local.prior_imu_angle - local.lr_imu_angle) >= lt_angle:
+			print("turned left to:", lt_angle, "degrees")
+			frame = percep.get_pic()
+			#out.write(frame)
+			break
+
+	with local.imu_angle_lock:
+		local.prior_imu_angle = local.imu_angle
+	#print("initial angle: ", local.prior_imu_angle)
+
+	# start turning right
+	loco.drive([loco.duty_turn + 10, 0, loco.duty_turn + 10, 0]) # check
+	while True:
+		frame = percep.get_pic()
+		edged = percep.detect_color(frame, color)
+
+		if rt_angle is None: # if we dont want to turn right
+			loco.drive([0, 0, 0, 0]) # stop turning right
+			break
+		# if we found the object
+		elif percep.detect_contours(edged, frame) is not None:
+			frame, cx, cy, edged, w, h = percep.detect_contours(edged, frame)
+			if abs(percep.get_angle2center(cx)) <= 15:
+				# slow down
+				loco.drive([loco.duty_turn - 5, 0, loco.duty_turn - 5, 0])
+			text = "obj is" + str(percep.get_angle2center(cx)) + "degrees from center"
+			frame = percep.write_on_frame(frame, text)
+			cv.imshow("look4color", frame)
+			cv.waitKey(30)
+			print("angle2center: ", percep.get_angle2center(cx))
+			# if object is close to center
 			if abs(percep.get_angle2center(cx)) <= 2:
 				loco.drive([0, 0, 0, 0]) # stop
 				print("cx: ", cx, "cy: ", cy)
-				#cv.imshow("centerd obj", frame)
-				time.sleep(10)
 				print("waiting before get_object")
-				get_object(color, frame)
-				time.sleep(10000)
+				# get obj angle
+				with local.imu_angle_lock:
+					local.lr_imu_angle = local.imu_angle
+				print("obj is at local.lr_imu_angle")
+				cv.imshow("look4color", frame)
+				while True:
+					ans = input("want to continue?: ")
+					if ans == 'y':
+						break
+				get_object(color, frame) # consider moving this out of this function?
 
-			# get current angle
-			with local.imu_angle_lock:
-				local.lr_imu_angle = local.imu_angle
-			print("current angle: ", local.lr_imu_angle)
-			# else if the bot has turned right > 90 degrees
-			if abs(local.prior_imu_angle - local.lr_imu_angle) >= right_turn:
-				print("turned right by 90 degrees")
-				frame = percep.get_pic()
-				#out.write(frame)
-				break
-
-		# update prior imu_angle
+		# get current angle
 		with local.imu_angle_lock:
-			local.prior_imu_angle = local.imu_angle
-		print("updated angle is: ", local.prior_imu_angle)
-
-		while True:
-			frame = percep.get_pic() # look for obj
-			loco.drive([0, loco.duty_turn - loco,reduce, 0, loco.duty_turn - loco,reduce]) # turn left
-			# check for object
-			edged = percep.detect_color(frame, color)
-			if percep.detect_contours(edged, frame) is not None:
-				frame, cx, cy, edged, w, h = percep.detect_contours(edged, frame)
-				print("contours is not none")
-				cv.imshow("contours: ", frame)
-				cv.waitKey(30)
-				# and the obj is close to the center
-				print("angle2center: ", percep.get_angle2center(cx))
-				if abs(percep.get_angle2center(cx)) <= 2:
-					loco.drive([0, 0, 0, 0]) # stop
-					print("cx: ", cx, "cy: ", cy)
-					cv.imshow("centerd obj", frame)
-					print("waiting before get_object")
-					get_object(color, frame)
-					time.sleep(10000)
-
-			# get current angle
-			with local.imu_angle_lock:
-				local.lr_imu_angle = local.imu_angle
-			print("current angle: ", local.lr_imu_angle)
-
-			# if the bot has turned left > 180 degrees
-			if abs(local.prior_imu_angle - local.lr_imu_angle) >= left_turn:
-				print("turned left by 180 degrees")
-				frame = percep.get_pic()
-				#out.write(frame)
-				break
+			local.lr_imu_angle = local.imu_angle
+		print("current angle: ", local.lr_imu_angle)
+		# else if the bot has turned right > 90 degrees
+		if abs(local.prior_imu_angle - local.lr_imu_angle) >= rt_angle:
+			print("turned right to ", rt_angle, "degrees")
+			frame = percep.get_pic()
+			#out.write(frame)
+			break
 
 
 def drive2(targ_x, targ_y):
@@ -379,13 +434,18 @@ def main():
 #			break
 
 	### loop2: start ###
-	while True:
-		x  = int(input("enter x-coord: "))
-		y = int(input("enter y-coord: "))
-		drive2(x, y)
-		retry = input("enter y or n to continue: ")
-		if retry == 'n':
-			break
+
+	look4color("red", 90, 0)
+
+
+
+#	while True:
+#		x  = int(input("enter x-coord: "))
+#		y = int(input("enter y-coord: "))
+#		drive2(x, y)
+#		retry = input("enter y or n to continue: ")
+#		if retry == 'n':
+#			break
 
 
 	### loop3: retrieve and deliver ###
