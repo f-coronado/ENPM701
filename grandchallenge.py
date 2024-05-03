@@ -416,7 +416,8 @@ def look4color(color, lt_angle, rt_angle):
 					ans = input("want to continue?: ")
 					if ans == 'y':
 						break
-				get_object(color, frame) # consider moving this out of this function?
+				return True
+				#get_object(color, frame) # consider moving this out of this function?
 
 		# get current angle
 		with local.imu_angle_lock:
@@ -544,15 +545,6 @@ def main():
 	fps = 10
 	out_video = cv.VideoWriter("grand_challenge.mp4", fourcc, fps, (640, 480), isColor=True)
 
-	### loop1: look for QR code ###
-#	while True:
-#		print("looking for qr code..")
-#		data = percep.detect_qr_code()
-#		if data == "ENPM701":
-#			print("starting grand challenge!")
-#			break
-
-	### loop2: start ###
 	while True:
 		with local.imu_angle_lock:
 			local.lr_imu_angle = local.imu_angle
@@ -564,8 +556,33 @@ def main():
 			print("decimal_places: ", decimal_places)
 			if decimal_places != 0:
 				break
-	look4color("green", 90, 0)
 
+	### loop1: look for QR code ###
+#	while True:
+#		print("looking for qr code..")
+#		data = percep.detect_qr_code()
+#		if data == "ENPM701":
+#			print("starting grand challenge!")
+#			break
+
+
+	order = ['green', 'blue', 'red', 'green', 'blue', 'red', 'green', 'blue'] # update
+
+	for color in order:
+		### loop2: look4color ###
+
+		while True:
+			obj_found = look4color("green", 90, 0)
+			if obj_found is True:
+				break
+		### loop3: get_object and deliver
+		while True:
+			grabbed_obj=get_object()
+				if grabbed_obj is True:
+					break
+
+		drive2(2, 8)
+		
 
 
 #	while True:
@@ -588,16 +605,6 @@ def main():
 
 
 
-	order = ['g', 'b', 'r', 'g', 'b', 'r', 'g', 'b'] # update
-#	for color in order:
-
-#		green_edged = perception.detect_color(hsv_frame, green_lower, green_upper)
-#		cv.imshow('green_edged', green_edged)
-#		cv.imshow('frame', frame)
-#		green_contours, cx, cy = perception.detect_contours(green_edged, frame)
-#		cv.imshow('green_contours', green_contours)
-#		cv.waitKey(0)
-#		cv.destroyAllWindows()
 
 
 if __name__ == "__main__":
