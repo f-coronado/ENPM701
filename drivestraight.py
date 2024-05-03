@@ -120,8 +120,6 @@ def control2():
 	for tick in local.FL_encoder_cnt:
 		y_dist = local.tick_2_distance(tick)
 		y.append(y_dist)
-	x = 
-	plt.plot(
 
 
 def main():

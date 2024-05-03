@@ -83,13 +83,10 @@ class Perception:
 
 		hsv_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
 		mask_video = cv.inRange(hsv_frame, lower_hsv, upper_hsv)
-		#cv.imshow('masked frame', mask_video)
-		blurred_video = cv.GaussianBlur(mask_video, (5,5), 0)
+		blurred_video = cv.GaussianBlur(mask_video, (3,3), 0)
 		blurred_video = self.add_channels(blurred_video)
 		gray_video = cv.cvtColor(blurred_video, cv.COLOR_BGR2GRAY)
 		edged_video = cv.Canny(gray_video, 40, 220)
-		#cv.imshow('edged frame', edged_video)
-		#cv.destroyAllWindows()
 
 		return edged_video
 
@@ -103,23 +100,16 @@ class Perception:
 			h = 0
 			# we always want to return something
 			return bgr_frame, cx, cy, edged_frame, w, h
-		cv.drawContours(bgr_frame, contours_, -1, (255, 0, 0), 2) # not sure if i need this
-
 		areas = [cv.contourArea(c) for c in contours_]
 		max_idx = np.argmax(areas)
 		cont = contours_[max_idx]
 		x, y, w, h = cv.boundingRect(cont)
 		cv.rectangle(bgr_frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
-		text = f"width: {w}. height: {h}"
-		cv.putText(bgr_frame, text, (x - 100, y), self.font, 1, self.white, 2)
+		#text = f"width: {w}. height: {h}"
+		#cv.putText(bgr_frame, text, (x - 100, y), self.font, 1, self.white, 2)
 		cx = int(x + w/2)
 		cy = int(y + h/2)
 
-#		for contour_ in contours_:
-#			cx, cy, w, h = cv.boundingRect(contour_)
-#			cv.rectangle(bgr_frame, (cx, cy), (cx+w, cy+h), (0, 0, 255), 2)
-#			text = f"width: {w}. height: {h}"
-#			cv.putText(bgr_frame, text, (cx - 100, cy), self.font, 1, self.white, 2)
 		return bgr_frame, cx, cy, edged_frame, w, h
 
 	def object_check(self, w, h):
@@ -127,7 +117,7 @@ class Perception:
 		#	return True
 		#elif w >= 120 and h >= 140:
 		#	return True
-		if w > 220 and h > 130:
+		if w > 210:
 			return "grip"
 
 		elif w >= 70 and h >= 100:

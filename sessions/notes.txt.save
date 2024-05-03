@@ -1,0 +1,8 @@
+farfromrightofblue wall is at a distance of 68 inches from blocks
+close2right of blue wall is at a distance of about 28 inches from blocks
+close2bluewall_620pm is about 23.5 inches from blocks
+facingbluewall_620pm is about 47 inches from blocks
+
+turning left using a turn_count of ~580 and duty_turn cycle of 100 in imu03.py seems to produce a decent 90 degrees left turn
+
+	
