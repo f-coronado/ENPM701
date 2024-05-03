@@ -135,14 +135,14 @@ def get_object(color, frame):
 			#cv.waitKey(30)
 ### begin perception steering ###
 			if w >= 35 and h >= 50: # start perception to steer
-				if percep.get_angle2center(cx) >= 5: # if obj to right more than 7 degrees
+				if percep.get_angle2center(cx) >= 2: # if obj to right more than 7 degrees
 					print("obj is to the right ", cx, "degrees")
 					# stop recenter then drive to it again
 					loco.drive([0, 0, 0, 0]) # stop
 					time.sleep(1)
 					look4color(color, 0, 135) # recenter object
 					loco.drive([0, 0, 0, 0]) # stop turning
-				elif percep.get_angle2center(cx) <= -5: # if obj to left more than 7 degrees
+				elif percep.get_angle2center(cx) <= -2: # if obj to left more than 7 degrees
 					print("obj is to left ", cx, "degrees")
 					loco.drive([0, 0, 0, 0]) # stop
 					time.sleep(1)
@@ -201,7 +201,7 @@ def get_object(color, frame):
 					else:
 						print("leaning left")
 						pin31 = pin31_opt + 5 + local.left_adjust
-						pin37 = pin37_opt + 5 - local.right_adjust
+						pin37 = pin37_opt - local.right_adjust
 						loco.drive([pin31, 0, 0, pin37]) # speed up left wheels
 
 			x2 = local.tick_2_distance(local.counterFL.value)
@@ -226,10 +226,10 @@ def get_object(color, frame):
 			#object is close enough so...
 			if percep.object_check(w, h) is "grip":
 				print("object is within grasp")
-				while True:
-					ans = input("is object within grasp?: ")
-					if ans == 'y':
-						break
+			#	while True:
+					#ans = input("is object within grasp?: ")
+					#if ans == 'y':
+				#		break
 
 				while True:
 					loco.drive([30, 0, 0, 30]) # drive to grab object
@@ -289,15 +289,19 @@ def look4color(color, lt_angle, rt_angle):
 			# th1 is local.lr_imu_angle
 			angle_roc = abs(th2 - local.lr_imu_angle) / abs(t2 - t1)
 			print("rate of change in angle is: ", angle_roc)
-			if angle_roc >= 8:
+			if angle_roc >= local.high_angle_roc:
 				print("decreasing left turn speed..")
-				pin33 -= 1
-				pin37 -= 1
+				if angle_roc >= local.max_angle_roc:
+					pin33 -= 4.5
+					pin37 -= 4.5
+				else:
+					pin33 -= 2.5
+					pin37 -= 2.5
 				loco.drive([0, pin33, 0, pin37])
 				#loco.drive([0, pin33, 0, loco.duty_turn - 17])
-			elif angle_roc <= 5:
-				pin33 += 1
-				pin37 += 1
+			elif angle_roc <= local.min_angle_roc:
+				pin33 += .75
+				pin37 += .75
 				print("increasing left turn speed..")
 				loco.drive([0, pin33, 0, pin37])
 				#loco.drive([0, loco.duty_turn - 5, 0, loco.duty_turn - 5])
@@ -368,15 +372,19 @@ def look4color(color, lt_angle, rt_angle):
 			# th1 is local.lr_imu_angle
 			angle_roc = abs(th2 - local.lr_imu_angle) / abs(t2 - t1)
 			print("rate of change in angle is: ", angle_roc)
-			if angle_roc >= 8:
+			if angle_roc >= local.high_angle_roc:
 				print("decreasing left turn speed..")
-				pin31 -= 1
-				pin35 -= 1
+				if angle_roc >= local.max_angle_roc:
+					pin31 -= 4.5
+					pin35 -= 4.5
+				else:
+					pin31 -= 2.5
+					pin35 -= 2.5
 				loco.drive([pin31, 0, pin35, 0])
 				#loco.drive([0, pin33, 0, loco.duty_turn - 17])
-			elif angle_roc <= 5:
-				pin31 += 1
-				pin35 += 1
+			elif angle_roc <= local.min_angle_roc:
+				pin31 += .75
+				pin35 += .75
 				print("increasing left turn speed..")
 				loco.drive([pin31, 0, pin35, 0])
 
@@ -556,7 +564,7 @@ def main():
 			print("decimal_places: ", decimal_places)
 			if decimal_places != 0:
 				break
-	look4color("red", 90, 0)
+	look4color("green", 90, 0)
 
 
 
@@ -580,7 +588,7 @@ def main():
 
 
 
-	order = ['r', 'g', 'b', 'r', 'g', 'b', 'r', 'g', 'b']
+	order = ['g', 'b', 'r', 'g', 'b', 'r', 'g', 'b'] # update
 #	for color in order:
 
 #		green_edged = perception.detect_color(hsv_frame, green_lower, green_upper)

@@ -37,6 +37,10 @@ class Locomotion:
 	# To pivot right: Pins 31 and 35 true, Pins 33 and 37 false
 	# format is [31, 33, 35, 37]
 		for pwm_object, duty in zip(self.pwm_obj, duty_cycle):
+			if duty <= 0:
+				duty = 1
+			elif duty >= 100:
+				duty = 95
 			pwm_object.ChangeDutyCycle(duty)
 
 	def grip(self, position):
