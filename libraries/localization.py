@@ -65,8 +65,8 @@ class Localization:
 		self.start_angle = self.imu_angle
 
 		# variables used for controlling steering
-		self.left_adjust = 8
-		self.right_adjust = 18
+		self.left_adjust = 4 # check, 8 worked in class
+		self.right_adjust = 10 # check, 18 worked in class
 		self.max_diff = .25
 
 		# robot characteristics
