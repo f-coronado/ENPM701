@@ -75,7 +75,7 @@ class Localization:
 		self.gear_ratio = 1/120
 		self.ticks_per_mtr_rev = 8
 
-		self.max_vel = .25
+		self.max_vel = .10
 		self.max_angle_roc = 12
 		self.high_angle_roc = 8
 		self.min_angle_roc = 5

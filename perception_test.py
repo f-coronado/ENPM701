@@ -3,9 +3,12 @@ import cv2 as cv
 import numpy as np
 import time
 
+perception = Perception()
+
+def main3():
+	perception.measure_distance()
 
 def main2():
-	perception = Perception()
 	frame = perception.get_pic()
 	edged = perception.detect_color(frame, "red")
 	cv.imshow('edged: ', edged)
@@ -51,4 +54,5 @@ def main():
 
 if __name__ == "__main__":
 	#main()
-	main2()
+	#main2()
+	main3()
