@@ -33,26 +33,74 @@ def relocalize():
 	while True:
 		with local.imu_angle_lock:
 			local.lr_imu_angle = local.imu_angle
-		print("pointed at ", local.lr_imu_angle, "degrees")
-		# if we're facing the left wall
+		#print("pointed at ", local.lr_imu_angle, "degrees")
+
+		# if we're facing the left wall break out of while loop
 		if local.lr_imu_angle >= 175 or local.lr_imu_angle <= -175:
 			print("should be facing left wall now")
+			print("angle is: ", local.lr_imu_angle)
 			loco.drive([0, 0, 0, 0]) # stop
 			break
 
+	local.reset_tick_count()
+	print("reset tick count to: ", local.counterFL.value, local.counterBR.value)
 	# drive straight to left wall
 	loco.drive([loco.duty, 0, 0, loco.duty])
 	print("driving to left wall")
 	while True:
-		# if we're closer than 1.2 feet from the wall
-		if percep.dist2wall.value <= 1.2:
+		avg_tick = (local.counterFL.value + local.counterBR.value) / 2
+		enc_dist = local.tick_2_distance(avg_tick)
+		if enc_dist >= .5: # if we drove 1 foot towards the wall
 			loco.drive([0, 0, 0, 0])
-			print("left wall is at a distance of: ", percep.dist2wall.value)
-			 # measure distance and relocalize x
-			local.x = percep.dist2wall.value
-			print("relocalized x to: ", local.x)
 			break
 
+	time.sleep(1)
+	dist_list = []
+	for i in range(3):
+		dist_list.append(percep.measure_distance())
+	dist2wall = sum(dist_list)/len(dist_list) #get avg distance across 3 measurements
+	print("left wall is at a distance of: ", percep.dist2wall)
+	# measure distance and relocalize x
+	local.x = dist2wall + (2.5/12) # add offset for center of robot
+	print("relocalized x to: ", local.x)
+
+	# turn right until..
+	loco.drive([40, 0, 40, 0])
+	time.sleep(2)
+	dist2wall = 1000 # reset so we break out of next loop appropriately
+	while True:
+		with local.imu_angle_lock:
+			local.lr_imu_angle = local.imu_angle
+		#print("pointed at ", local.lr_imu_angle, "degrees")
+		# if we're facing the top wall break out of while loop
+		if local.lr_imu_angle <= 93 :
+			print("should be facing top wall now")
+			print("angle is: ", local.lr_imu_angle)
+			loco.drive([0, 0, 0, 0]) # stop
+			break
+
+	local.reset_tick_count()
+	print("reset tick count to: ", local.counterFL.value, local.counterBR.value)
+	# drive straight to top wall
+	loco.drive([loco.duty, 0, 0, loco.duty])
+	print("driving to top wall")
+	while True:
+		avg_tick = (local.counterFL.value + local.counterBR.value) / 2
+		enc_dist = local.tick_2_distance(avg_tick)
+		if enc_dist >= .25: # if we drove 1 foot towards the wall
+			loco.drive([0, 0, 0, 0])
+			break
+
+	time.sleep(1)
+	dist_list = []
+	for i in range(3):
+		dist_list.append(percep.measure_distance())
+	dist2wall = sum(dist_list)/len(dist_list)
+	print("top wall is at a distance of: ", percep.dist2wall)
+	# measure distance and relocalize x
+	local.y = 10 - dist2wall + (2.5/12) # add offset for center of robot
+	print("relocalized y to: ", local.y)
+	print("final relocalized values x:", local.x, "y: ", local.y)
 
 #	elif local.x <= 5: # if robot is closer to left wall
 #		with local.imu_angle_lock:

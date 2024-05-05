@@ -6,7 +6,8 @@ import time
 perception = Perception()
 
 def main3():
-	perception.measure_distance()
+	while True:
+		print("distance in feet is: ", perception.measure_distance())
 
 def main2():
 	frame = perception.get_pic()

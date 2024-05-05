@@ -27,52 +27,45 @@ class Perception:
 		GPIO.setup(self.trig, GPIO.OUT)
 		GPIO.setup(self.echo, GPIO.IN)
 
-		self.dist2wall = multiprocessing.Value('f', 0)
-		self.distance_process = multiprocessing.Process(target=self.measure_distance)
-		self.distance_process.daemon=True
-		self.distance_process.start()
-		print("distance process started")
+		#self.dist2wall = multiprocessing.Value('f', 0)
+		#self.distance_process = multiprocessing.Process(target=self.measure_distance)
+		#self.distance_process.daemon=True
+		#self.distance_process.start()
+		#print("distance process started")
+		self.dist2wall = 0
 
 	def measure_distance(self):
 		GPIO.output(self.trig, False)
 		i = 0
-		
-		pulse_end = 1.1111
-		pulse_start = 2.2222
 
-		while True:
-			time.sleep(0.01)
-			# generate self.trigger pulse
-			GPIO.output(self.trig, True)
-			time.sleep(0.00001)
-			GPIO.output(self.trig, False)
+#		while True:
+		time.sleep(0.01)
 
-			echo_cnt = 0
-			# generate self.echo time signal
-			while GPIO.input(self.echo) == 0:
-				#print("echo = 0", i)
-				pulse_start = time.time()
-				echo_cnt += 1
-				if echo_cnt >= 200:
-					break
+		# generate self.trigger pulse
+		GPIO.output(self.trig, True)
+		time.sleep(0.00001)
+		GPIO.output(self.trig, False)
 
-			echo_cnt = 0
-			while GPIO.input(self.echo) == 1:
-				#print("echo = 1", i)
-				pulse_end = time.time()
-				echo_cnt += 1
-				if echo_cnt >= 200:
-					break
+		# generate self.echo time signal
+		while GPIO.input(self.echo) == 0:
+			#print("echo = 0", i)
+			pulse_start = time.time()
+			#echo_cnt += 1
+			#if echo_cnt >= 100:
+			#	break
 
-			if pulse_end is not 1.1111 and pulse_start is not 2.2222:
-				pulse_duration = pulse_end - pulse_start
+		while GPIO.input(self.echo) == 1:
+			#print("echo = 1", i)
+			pulse_end = time.time()
+			#echo_cnt += 1
+			#if echo_cnt >= 100:
+				#break
 
-				# convert time to distance
-				self.dist2wall.value = round(((pulse_duration * 17150) / 2.54)*(1/12), 2)
-				#print("dist2wall: ", self.dist2wall)
-			i += 1
+		pulse_duration = pulse_end - pulse_start
 
-#		return distance # inches
+		# convert time to distance [feet]
+		self.dist2wall = round(((pulse_duration * 17150) / 2.54)*(1/12), 2)
+		return self.dist2wall
 
 
 	def get_pic(self):
