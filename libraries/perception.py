@@ -73,6 +73,7 @@ class Perception:
 		if not ret:
 			print("couldn't capture frame")
 		frame = cv.flip(frame, -1)
+		frame = frame [60:, :]
 		return frame
 
 	def write_on_frame(self, frame, text):
@@ -135,7 +136,7 @@ class Perception:
 		#	return True
 		#elif w >= 120 and h >= 140:
 		#	return True
-		if w > 210:
+		if w > 210 and h <= 155:
 			return "grip"
 
 		elif w >= 60 and h >= 85:
