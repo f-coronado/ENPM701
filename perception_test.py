@@ -11,7 +11,7 @@ def main3():
 
 def main2():
 	frame = perception.get_pic()
-	edged = perception.detect_color(frame, "red")
+	edged = perception.detect_color(frame, "green")
 	cv.imshow('edged: ', edged)
 	#print("result of detect_contours: ", perception.detect_contours(edged, frame), "is of type:" , type(perception.detect_contours(edged, frame)))
 	contours, _, _, edged, _, _ = perception.detect_contours(edged, frame)
@@ -55,5 +55,5 @@ def main():
 
 if __name__ == "__main__":
 	#main()
-	#main2()
-	main3()
+	main2()
+	#main3()

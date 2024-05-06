@@ -138,7 +138,7 @@ class Perception:
 		if w > 210:
 			return "grip"
 
-		elif w >= 70 and h >= 100:
+		elif w >= 60 and h >= 85:
 			return "open"
 		else:
 			return False

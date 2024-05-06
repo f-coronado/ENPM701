@@ -48,20 +48,22 @@ def relocalize():
 	loco.drive([loco.duty, 0, 0, loco.duty])
 	print("driving to left wall")
 	while True:
+		dist2wall = percep.measure_distance()
 		avg_tick = (local.counterFL.value + local.counterBR.value) / 2
 		enc_dist = local.tick_2_distance(avg_tick)
-		if enc_dist >= .5: # if we drove 1 foot towards the wall
+		if dist2wall <= 1.5:
+		#if enc_dist >= .5: # if we drove 1 foot towards the wall
 			loco.drive([0, 0, 0, 0])
 			break
 
 	time.sleep(1)
 	dist_list = []
-	for i in range(3):
+	for i in range(7):
 		dist_list.append(percep.measure_distance())
 	dist2wall = sum(dist_list)/len(dist_list) #get avg distance across 3 measurements
-	print("left wall is at a distance of: ", percep.dist2wall)
+	print("left wall is at a distance of: ", dist2wall)
 	# measure distance and relocalize x
-	local.x = dist2wall + (2.5/12) # add offset for center of robot
+	local.x = dist2wall
 	print("relocalized x to: ", local.x)
 
 	# turn right until..
@@ -81,92 +83,37 @@ def relocalize():
 
 	local.reset_tick_count()
 	print("reset tick count to: ", local.counterFL.value, local.counterBR.value)
-	# drive straight to top wall
-	loco.drive([loco.duty, 0, 0, loco.duty])
-	print("driving to top wall")
-	while True:
-		avg_tick = (local.counterFL.value + local.counterBR.value) / 2
-		enc_dist = local.tick_2_distance(avg_tick)
-		if enc_dist >= .25: # if we drove 1 foot towards the wall
-			loco.drive([0, 0, 0, 0])
-			break
+
+	dist2wall = percep.measure_distance()
+	print("wall is approx: ", dist2wall , "feet far")
+
+	if dist2wall >= 1.5:
+		# drive straight to top wall
+		loco.drive([loco.duty, 0, 0, loco.duty])
+		print("driving to top wall")
+		for i in range(10):
+			while True:
+				avg_tick = (local.counterFL.value + local.counterBR.value) / 2
+				enc_dist = local.tick_2_distance(avg_tick)
+				#dist2wall = percep.measure_distance()
+				if enc_dist >= .25: # if we drove 1 foot towards the wall
+					loco.drive([0, 0, 0, 0])
+					break
+			dist2wall = percep.measure_distance()
+			print("dist2wall: ", dist2wall)
+			if dist2wall <= 1.5:
+				break
 
 	time.sleep(1)
 	dist_list = []
-	for i in range(3):
+	for i in range(7):
 		dist_list.append(percep.measure_distance())
 	dist2wall = sum(dist_list)/len(dist_list)
 	print("top wall is at a distance of: ", percep.dist2wall)
 	# measure distance and relocalize x
-	local.y = 10 - dist2wall + (2.5/12) # add offset for center of robot
+	local.y = 10 - dist2wall 
 	print("relocalized y to: ", local.y)
 	print("final relocalized values x:", local.x, "y: ", local.y)
-
-#	elif local.x <= 5: # if robot is closer to left wall
-#		with local.imu_angle_lock:
-#			local.lr_imu_angle = local.imu_angle # check what direction we're looking
-#		print("current angle: ", local.lr_imu_angle)
-#		time.sleep(1)
-#		loco.drive([0, loco.duty_turn + 8, 0, loco.duty_turn + 5]) # turn left
-#		while True:
-#			with local.imu_angle_lock:
-#				local.lr_imu_angle = local.imu_angle # check what direction we're lookin
-#			if local.lr_imu_angle >= 179: # turn until we face left wall
-#				break 
-#		loco.drive([0, 0, 0, 0]) # stop turning
-#		time.sleep(1)
-#		loco.drive([loco.duty, 0, 0, loco.duty]) # drive straight to left wall
-#		while True:
-#			if local.x <= 1.95: # if we're within 2 feet of the left wall
-#				break
-
-#	elif local.x <= 2: # if robot is near left wall
-#		with local.imu_angle_lock:
-#			local.lr_imu_angle = local.imu_angle # check what direction we're looking
-#		if 0 <= local.lr_imu_angle <= 180: # if robot is facing anywhere in 
-						  # NE or NW quadrant
-#			local.drive([0, loco.duty_turn + 8, 0, loco.duty_turn + 5]) # turn left
-#			while True: # turn until..
-#				with local.imu_angle_lock:
-#					local.lr_imu_angle = local.imu_angle
-#				if local.lr_imu_angle >= 180: # facing left wall so break
-#					break
-#		elif -180 <= local.lr_imu_angle <= 0: # if robot is facing anywhere in 
-						   # SE or SW quadrant
-#			local.drive([loco.duty_turn + 10, 0, loco.duty_turn + 8, 0]) # turn right
-#			while True: # turn until..
-#				with local.imu_angle_lock:
-#					local.lr_imu_angle = local.imu_angle
-#				if local.lr_imu_angle <= -180: # facing left wall so break
-#					break
-#		loco.drive([0, 0, 0, 0])
-#		time.sleep(2)
-#		local.x = percep.measure_distance()
-#		print("relocalizing x to: ", local.x)
-#
-#	elif local.x >= 8: # if robot is near right wall
-#		with local.imu_angle_lock:
-#			local.lr_imu_angle = local.imu_angle # check what direction we're looking
-#		if 0 <= local.lr_imu_angle <= 180: # if robot is facing anywhere in NE quadrant
-						  # or NW quadrant
-#			local.drive([loco.duty_turn + 8, 0, loco.duty_turn + 5, 0]) # turn right
-#			while True: # turn until..
-#				with local.imu_angle_lock:
-#					local.lr_imu_angle = local.imu_angle
-#				if local.lr_imu_angle <= 1: # facing right wall so break
-#					break
-#		elif -180 <= local.lr_imu_angle <= 0: # if robot is facing anywhere in 
-						     # SE or SW quadrant
-#			local.drive([0, loco.duty_turn + 8, 0, loco.duty_turn + 5]) # turn left
-#			while True: # turn until..
-#				with local.imu_angle_lock:
-#					local.lr_imu_angle = local.imu_angle
-#				if local.lr_imu_angle <= -180: # facing left wall so break
-#					break
-#		loco.drive([0, 0, 0, 0])
-#		time.sleep(2)
-#		local.x = percep.measure_distance()
-#		print("relocalizing x to: ", local.x)
 
 def deliver():
 
@@ -205,16 +152,18 @@ def get_object(color, frame):
 		print("tick count before driving straight in get_obj: ", local.counterFL.value, \
 			local.counterBR.value)
 
-		pin31 = loco.duty
-		pin37 = loco.duty
+		pin31 = loco.duty # check update
+		pin37 = loco.duty # check update
 		pin31_opt = pin31
 		pin37_opt = pin37
 		loco.drive([pin31, 0, 0, pin37]) # drive straight to obj
 		j = 0
 		while True:
-
+			print("current location is x:", local.x, "y: ", local.y)
 			velocity = 0
-			if j != 0:
+			if j % 5 and j!= 0:
+				#local.x = 
+
 				velocity = abs(x2 - x1) / abs(t2 - t1)
 				print("speed: ", round(velocity, 3))
 				#if velocity >= local.max_vel:
@@ -230,58 +179,25 @@ def get_object(color, frame):
 			frame, cx, cy, edged_frame, w, h = percep.detect_contours(edged_frame, frame)
 			#print("angle2center: ", percep.get_angle2center(cx), \
 			#	"obj width: ", w, "height: ", h)
-			#cv.imshow("contours", frame)
-			#cv.waitKey(30)
+
 ### begin perception steering ###
 			if w >= 35 and h >= 50: # start perception to steer
 				print("using camera to steer")
 				print("pin31: ", pin31, "pin37: ", pin37)
 				with local.imu_angle_lock:
 					local.lr_imu_angle = local.imu_angle
-				if percep.get_angle2center(cx) >= 4: # if obj to right more than 7 degrees
+				if percep.get_angle2center(cx) >= 2: # if obj to right more than 7 degrees
 					print("obj is to the right ", cx, "degrees")
 					# stop recenter then drive to it again
 					loco.drive([0, 0, 0, 0]) # stop
 					time.sleep(1)
-					#avg_tick = (local.counterFL.value + local.counterBR.value) / 2
-					#distance = local.tick_2_distance(avg_tick)
-					#print("distance traveled inside of get_object(): ", \
-					#distance)
-					# update position before turning
-					#local.x = local.x + distance * math.cos(math.radians(\
-					#	local.lr_imu_angle))
-					#local.y = local.y + distance * math.cos(math.radians(\
-					#	local.lr_imu_angle))
-					#print("current location is x: ", local.x, "y: ", local.y)
-					#while True:
-					#	ans = input("position look right?: ")
-					#	if ans == 'y':
-					#		break
-					#local.reset_tick_count()
 					look4color(color, 0, 135) # recenter object
 					loco.drive([0, 0, 0, 0]) # stop turning
-				elif percep.get_angle2center(cx) <= -4: # if obj to left more than 7 degrees
+				elif percep.get_angle2center(cx) <= -2: # if obj to left more than 7 degrees
 					print("pin31: ", pin31, "pin37: ", pin37)
 					print("obj is to left ", cx, "degrees")
 					loco.drive([0, 0, 0, 0]) # stop
 					time.sleep(1)
-					#avg_tick = (local.counterFL.value + local.counterBR.value) / 2
-					#distance = local.tick_2_distance(avg_tick)
-					#print("distance traveled inside of get_object(): ", \
-					#distance)
-
-					# update position before turning
-					#local.x = local.x + distance * math.cos(math.radians(\
-					#	local.lr_imu_angle))
-					#local.y = local.y + distance * math.cos(math.radians(\
-					#	local.lr_imu_angle))
-					#print("current location is x: ", local.x, "y: ", local.y)
-					#while True:
-					#	ans = input("position look right?: ")
-					#	if ans == 'y':
-					#		break
-
-					#local.reset_tick_count()
 					look4color(color, 135, 0) # recenter object
 					loco.drive([0, 0, 0, 0]) # stop turning
 
@@ -352,18 +268,10 @@ def get_object(color, frame):
 			frame = percep.get_pic()
 			edged = percep.detect_color(frame, color)
 			frame, cx, cy, _, w, h = percep.detect_contours(edged, frame)
-			cv.imshow("get_object", frame)
-			cv.waitKey(30)
 			print("w: ", w, "h: ", h)
-			# if w > 100 and h > 145
 			#object is close enough so...
 			if percep.object_check(w, h) is "grip":
 				print("object is within grasp")
-			#	while True:
-					#ans = input("is object within grasp?: ")
-					#if ans == 'y':
-				#		break
-
 				while True:
 					# record angle before driving straight
 					with local.imu_angle_lock:
@@ -371,7 +279,10 @@ def get_object(color, frame):
 					loco.drive([30, 0, 0, 30]) # drive to grab object
 					_, _ = local.get_tick_count() # update tick count
 					# 3 inches = .0732m, and 4687 ticks/m
-					if local.counterFL.value >= .0762 * 4687:
+					avg_tick = (local.counterFL.value + \
+							local.counterBR.value)/2
+					dist = local.tick_2_distance(avg_tick)
+					if dist >= .8: # if we drove almost 1ft
 						break
 				loco.grip("close")
 				loco.drive([0, 0, 0, 0])
@@ -388,9 +299,17 @@ def get_object(color, frame):
 					start_angle))
 				print("current location is x: ", local.x, "y: ", local.y)
 				print("current heading: ", local.lr_imu_angle)
+				while True:
+					ans = input("check if we grabbed obj and position looks accurate")
+					if ans == 'y':
+						break
 
 				return True
-
+			# if the object was lost
+			elif w == 0 and h == 0:
+				print("lost object..")
+				loco.drive([0, 0, 0, 0])
+				return False
 
 
 def look4color(color, lt_angle, rt_angle):
@@ -411,87 +330,86 @@ def look4color(color, lt_angle, rt_angle):
 		local.prior_imu_angle = local.imu_angle
 	print("angle before turning left is: ", local.prior_imu_angle)
 
-	# start turning left
-	pin33 = loco.duty_turn - 5
-	pin37 = loco.duty_turn - 5
-	loco.drive([0, pin33, 0, pin37]) # check
+	if lt_angle is not None: # if we dont want to turn left
 
-	i = 0
+		# start turning left
+		pin33 = loco.duty_turn - 5 # check
+		pin37 = loco.duty_turn - 5 # check
+		loco.drive([0, pin33, 0, pin37]) # check
 
-	# this works best when not fully charged batteries
-	#loco.drive([0, loco.duty_turn + 5, 0, loco.duty_turn + 5]) # check
-	while True:
+		i = 0
 
-		frame = percep.get_pic() # look for obj
-		# check for object
-		edged = percep.detect_color(frame, color)
+		# this works best when not fully charged batteries
+		#loco.drive([0, loco.duty_turn + 5, 0, loco.duty_turn + 5]) # check
+		while True:
+			frame = percep.get_pic() # look for obj
+			# check for object
+			edged = percep.detect_color(frame, color)
+			print("edged: ")
+			
+			# turning control logic
+			t1 = time.time()
 
-		# turning control logic
-		t1 = time.time()
+			if i != 0:
+				with local.imu_angle_lock:
+					local.lr_imu_angle = local.imu_angle
+				# th1 is local.lr_imu_angle
+				angle_roc = abs(th2 - local.lr_imu_angle) / abs(t2 - t1)
+				print("rate of change in angle is: ", angle_roc)
+				if angle_roc >= local.high_angle_roc:
+					print("decreasing left turn speed..")
+					if angle_roc >= local.max_angle_roc:
+						pin33 -= 6.5 # check all these
+						pin37 -= 6.5
+					else:
+						pin33 -= 4.5
+						pin37 -= 4.5
+					loco.drive([0, pin33, 0, pin37])
+					#loco.drive([0, pin33, 0, loco.duty_turn - 17])
+				elif angle_roc <= local.min_angle_roc:
+					pin33 += .75
+					pin37 += .75
+					print("increasing left turn speed..")
+					loco.drive([0, pin33, 0, pin37])
+					#loco.drive([0, loco.duty_turn - 5, 0, loco.duty_turn - 5])
 
-		if i != 0:
+
+			if percep.detect_contours(edged, frame) is not None:
+				print("obj is in fov")
+				frame, cx, cy, edged, w, h = percep.detect_contours(edged, frame)
+				if abs(percep.get_angle2center(cx)) <= 10: # check
+					# slow down
+					loco.drive([0, pin33 - 4, 0, pin37 - 4]) # check
+
+				# if object is close to center
+				with local.imu_angle_lock:
+						local.lr_imu_angle = local.imu_angle
+				if abs(percep.get_angle2center(cx)) <= 3: # check
+					loco.drive([0, 0, 0, 0]) # stop
+					# get obj angle
+
+					print("bot is pointed at: ",local.lr_imu_angle, "degrees")
+					#while True:
+					#	ans = input("exiting look4color, want to continue?")
+					#	if ans == 'y':
+					#		break
+					return True, frame
+					#get_object(color, frame) # consider moving this out?
+
+			# get current angle
 			with local.imu_angle_lock:
 				local.lr_imu_angle = local.imu_angle
-			# th1 is local.lr_imu_angle
-			angle_roc = abs(th2 - local.lr_imu_angle) / abs(t2 - t1)
-			print("rate of change in angle is: ", angle_roc)
-			if angle_roc >= local.high_angle_roc:
-				print("decreasing left turn speed..")
-				if angle_roc >= local.max_angle_roc:
-					pin33 -= 6.5
-					pin37 -= 6.5
-				else:
-					pin33 -= 4.5
-					pin37 -= 4.5
-				loco.drive([0, pin33, 0, pin37])
-				#loco.drive([0, pin33, 0, loco.duty_turn - 17])
-			elif angle_roc <= local.min_angle_roc:
-				pin33 += .75
-				pin37 += .75
-				print("increasing left turn speed..")
-				loco.drive([0, pin33, 0, pin37])
-				#loco.drive([0, loco.duty_turn - 5, 0, loco.duty_turn - 5])
+			print("current angle: ", local.lr_imu_angle)
+			th2 = local.lr_imu_angle
+			t2 = time.time()
 
-		if lt_angle is None: # if we dont want to turn left
-			loco.drive([0, 0, 0, 0]) # stop turning left
-			break
-		elif percep.detect_contours(edged, frame) is not None:
-			frame, cx, cy, edged, w, h = percep.detect_contours(edged, frame)
-			if abs(percep.get_angle2center(cx)) <= 15:
-				# slow down
-				loco.drive([0, loco.duty_turn, 0, loco.duty_turn])
-
-			#cv.imshow("look4color: ", frame)
-			#cv.waitKey(30)
-			# if object is close to center
-			with local.imu_angle_lock:
-					local.lr_imu_angle = local.imu_angle
-			if abs(percep.get_angle2center(cx)) <= 5:
-				loco.drive([0, 0, 0, 0]) # stop
-				# get obj angle
-				print("obj is at: ",local.lr_imu_angle, "degrees")
-				cv.imshow("look4color", frame)
-				while True:
-					ans = input("exiting look4color, want to continue?")
-					if ans == 'y':
-						break
-				return True, frame
-				#get_object(color, frame) # consider moving this out?
-
-		# get current angle
-		with local.imu_angle_lock:
-			local.lr_imu_angle = local.imu_angle
-		print("current angle: ", local.lr_imu_angle)
-		th2 = local.lr_imu_angle
-		t2 = time.time()
-
-		# if the bot has turned left > lt_angle
-		if abs(local.prior_imu_angle - local.lr_imu_angle) >= lt_angle:
-			print("turned left to:", local.imu_angle, "degrees")
-			frame = percep.get_pic()
-			#out.write(frame)
-			break # break out of loop to start turning right
-		i += 1
+			# if the bot has turned left > lt_angle
+			if abs(local.prior_imu_angle - local.lr_imu_angle) >= lt_angle:
+				print("turned left to:", local.imu_angle, "degrees")
+				frame = percep.get_pic()
+				#out.write(frame)
+				break # break out of loop to start turning right
+			i += 1 ## end of left turn while loop ##
 
 	i = 0 # reset for use in next while loop
 	with local.imu_angle_lock:
@@ -499,87 +417,79 @@ def look4color(color, lt_angle, rt_angle):
 	#print("initial angle: ", local.prior_imu_angle)
 
 
-	loco.drive([loco.duty_turn - 5, 0, loco.duty_turn - 5, 0]) # check
-	# start turning right, thise config works best when batteries are not fully charged
-	pin31 = loco.duty_turn + 10
-	pin35 = loco.duty_turn + 10
-	loco.drive([pin31, 0, pin35, 0]) # check
-	while True:
-		frame = percep.get_pic()
-		edged = percep.detect_color(frame, color)
+	if rt_angle is not None:
+		loco.drive([loco.duty_turn - 5, 0, loco.duty_turn - 5, 0]) # check
+		# start turning right, thise config works best when batteries are not fully charged
+		pin31 = loco.duty_turn
+		pin35 = loco.duty_turn
+		loco.drive([pin31, 0, pin35, 0]) # check
+		while True:
+			frame = percep.get_pic()
+			edged = percep.detect_color(frame, color)
 
+			# turning control logic
+			t1 = time.time()
 
-		# turning control logic
-		t1 = time.time()
-
-		if i != 0:
-			with local.imu_angle_lock:
-				local.lr_imu_angle = local.imu_angle
-			# th1 is local.lr_imu_angle
-			angle_roc = abs(th2 - local.lr_imu_angle) / abs(t2 - t1)
-			print("rate of change in angle is: ", angle_roc)
-			if angle_roc >= local.high_angle_roc:
-				print("decreasing left turn speed..")
-				if angle_roc >= local.max_angle_roc:
-					pin31 -= 4.5
-					pin35 -= 4.5
-				else:
-					pin31 -= 2.5
-					pin35 -= 2.5
-				loco.drive([pin31, 0, pin35, 0])
-				#loco.drive([0, pin33, 0, loco.duty_turn - 17])
-			elif angle_roc <= local.min_angle_roc:
-				pin31 += .75
-				pin35 += .75
-				print("increasing left turn speed..")
-				loco.drive([pin31, 0, pin35, 0])
-
-		if rt_angle is None: # if we dont want to turn right
-			loco.drive([0, 0, 0, 0]) # stop turning right
-			break
-		# if we found the object
-		elif percep.detect_contours(edged, frame) is not None:
-			frame, cx, cy, edged, w, h = percep.detect_contours(edged, frame)
-			if abs(percep.get_angle2center(cx)) <= 15:
-				# slow down
-				loco.drive([loco.duty_turn, 0, loco.duty_turn, 0])
-			text = "obj is" + str(percep.get_angle2center(cx)) + "degrees from center"
-			frame = percep.write_on_frame(frame, text)
-			#cv.imshow("look4color", frame)
-			#cv.waitKey(30)
-			#print("angle2center: ", percep.get_angle2center(cx))
-			# if object is close to center
-			if abs(percep.get_angle2center(cx)) <= 2:
-				loco.drive([0, 0, 0, 0]) # stop
-				print("cx: ", cx, "cy: ", cy)
-				print("waiting before get_object")
-				# get obj angle
+			if i != 0:
 				with local.imu_angle_lock:
 					local.lr_imu_angle = local.imu_angle
-				print("obj is at: ", local.lr_imu_angle, "degrees")
-				cv.imshow("look4color", frame)
-				while True:
-					ans = input("exiting look4color want to continue?: ")
-					if ans == 'y':
-						break
-				return True, frame
-				#get_object(color, frame) # consider moving this out of this function?
+				# th1 is local.lr_imu_angle
+				angle_roc = abs(th2 - local.lr_imu_angle) / abs(t2 - t1)
+				print("rate of change in angle is: ", angle_roc)
+				if angle_roc >= local.high_angle_roc:
+					print("decreasing right turn speed..")
+					if angle_roc >= local.max_angle_roc:
+						pin31 -= 4.5
+						pin35 -= 4.5
+					else:
+						pin31 -= 2.5
+						pin35 -= 2.5
+					loco.drive([pin31, 0, pin35, 0])
+					#loco.drive([0, pin33, 0, loco.duty_turn - 17])
+				elif angle_roc <= local.min_angle_roc:
+					pin31 += .75
+					pin35 += .75
+					print("increasing right turn speed..")
+					loco.drive([pin31, 0, pin35, 0])
 
-		# get current angle
-		with local.imu_angle_lock:
-			local.lr_imu_angle = local.imu_angle
-		print("current angle: ", local.lr_imu_angle)
-		th2 = local.lr_imu_angle
-		t2 = time.time()
+
+			# if we found the object
+			if percep.detect_contours(edged, frame) is not None:
+				frame, cx, cy, edged, w, h = percep.detect_contours(edged, frame)
+				if abs(percep.get_angle2center(cx)) <= 15: # check
+					# slow down
+					loco.drive([loco.duty_turn, 0, loco.duty_turn, 0])
+				text = "obj is" + str(percep.get_angle2center(cx)) + "degrees from center"
+				frame = percep.write_on_frame(frame, text)
+				# if object is close to center
+				with local.imu_angle_lock:
+					local.lr_imu_angle = local.imu_angle
+				if abs(percep.get_angle2center(cx)) <= 3:
+					loco.drive([0, 0, 0, 0]) # stop
+					print("obj is at: ", local.lr_imu_angle, "degrees")
+					while True:
+						ans = input("exiting look4color want to continue?: ")
+						if ans == 'y':
+							break
+					return True, frame
+					#get_object(color, frame) # consider moving this out of this function?
+
+			# get current angle
+			with local.imu_angle_lock:
+				local.lr_imu_angle = local.imu_angle
+			print("current angle: ", local.lr_imu_angle)
+			th2 = local.lr_imu_angle
+			t2 = time.time()
 
 
-		# else if the bot has turned right > rt_angledegrees
-		if abs(local.prior_imu_angle - local.lr_imu_angle) >= rt_angle:
-			print("turned right to ", rt_angle, "degrees")
-			frame = percep.get_pic()
-			#out.write(frame)
-			break
-		i += 1
+			# else if the bot has turned right > rt_angledegrees
+			if abs(local.prior_imu_angle - local.lr_imu_angle) >= rt_angle:
+				print("turned right to ", rt_angle, "degrees")
+				frame = percep.get_pic()
+				#out.write(frame)
+				break
+			i += 1 ## end of right turn while loop ##
+	return False, frame
 
 
 def drive2(targ_x, targ_y):
@@ -599,7 +509,7 @@ def drive2(targ_x, targ_y):
 
 	# turn in this while loop
 	while True:
-		if abs(target_angle - local.lr_imu_angle - 2) <= 1:
+		if abs(target_angle - local.lr_imu_angle - 2) <= 3:
 			print("pointed at ", target_angle ,\
 				"breaking out of turning loop")
 			loco.drive([0, 0, 0, 0])
@@ -637,7 +547,8 @@ def drive2(targ_x, targ_y):
 		ans = input("want to continue? enter y or n: ")
 		if ans == 'y':
 			break
-	loco.drive([loco.duty, 0, 0, loco.duty]) # drive straight
+	inc = 30
+	loco.drive([loco.duty + inc, 0, 0, loco.duty + inc]) # drive straight
 
 	# drive forward in this while loop
 	while True:
@@ -653,23 +564,23 @@ def drive2(targ_x, targ_y):
 		#print("distance from wall: ", round(percep.measure_distance(), 2))
 		if local.lr_imu_angle - start_angle <= -local.max_diff: # if robot leans right
 			print("leaning right")
-			pin31 = loco.duty - local.left_adjust
-			pin37 = loco.duty + local.right_adjust
+			pin31 = loco.duty + inc - local.left_adjust
+			pin37 = loco.duty + inc + local.right_adjust
 			loco.drive([pin31, 0, 0, pin37]) # speed up right wheels
 		elif local.lr_imu_angle - start_angle >= local.max_diff: # if robot leans left
 			print("leaning left")
-			pin31 = loco.duty  + local.left_adjust
-			pin37 = loco.duty - local.right_adjust
+			pin31 = loco.duty  + inc + local.left_adjust
+			pin37 = loco.duty + inc - local.right_adjust
 			loco.drive([pin31, 0, 0, pin37]) # speed up left wheels
 		if i % 2 == 0: # update current distance every other iteration
 			tick_avg = (local.counterFL.value + local.counterBR.value) / 2
 			current_distance = local.tick_2_distance(tick_avg)
 		# once we start to get within 2 feet of the x walls, and we're pointed at it
 		# we should measure distance to relocalize the x coordinate
-		if local.right_x_wall - local.x <= 2 and -.5 <= local.lr_imu_angle <= .5: # once we get within 2 feet of the right wall
-			dist = percep.measure_distance()
-			print("wall is at a distance of: ", init_dist, "cm")
-			local.x = local.right_x_wall - dist
+		#if local.right_x_wall - local.x <= 2 and -.5 <= local.lr_imu_angle <= .5: # once we get within 2 feet of the right wall
+		#	dist = percep.measure_distance()
+		#	print("wall is at a distance of: ", init_dist, "cm")
+		#	local.x = local.right_x_wall - dist
 		if current_distance + .28 >= distance:
 			loco.drive([0, 0, 0, 0])
 			break
@@ -680,6 +591,7 @@ def drive2(targ_x, targ_y):
 	print("distance traveled was: ", distance)
 	print("x: ", local.x, "y: ", local.y)
 
+	## end of drive2(x, y)
 
 def main():
 
@@ -702,7 +614,7 @@ def main():
 			if decimal_places != 0:
 				break
 
-	### loop1: look for QR code ###
+	### 1: look for QR code ###
 #	while True:
 #		print("looking for qr code..")
 #		data = percep.detect_qr_code()
@@ -711,26 +623,72 @@ def main():
 #			break
 
 
-	order = ['green', 'blue', 'red', 'green', 'blue', 'red', 'green', 'blue'] # update
-
+	i = 0
+	order = ['green', 'red', 'red', 'blue', 'red', 'green', 'blue'] # update
 	for color in order:
-		### loop2: look4color ###
-
-		print("\nlooking for", color, "blocks")
+		start = time.time()
+		### 2: look4color ###
+		with local.imu_angle_lock:
+			local.lr_imu_angle = local.imu_angle
+		print("\nlooking for", color, "blocks i: ", i)
+		print("pointed at: ", local.lr_imu_angle)
 		while True:
-			print("x: ", local.x, "y: ", local.y)
-			obj_found, frame = look4color(color, 90, 0)
+			if i == 0:
+				print("x: ", local.x, "y: ", local.y)
+				obj_found, frame = look4color(color, 90, 0)
+			else:
+				print("x: ", local.x, "y: ", local.y)
+				obj_found, frame = look4color(color, 0, -90)
+
 			if obj_found is True:
 				print("found obj, robot is pointing: ", local.imu_angle)
 				break
-		### loop3: get_object and deliver
+			# update : what if the obj is not found?: look again through this same loop
+
+		### 3: get_object ###
 		while True:
 			grabbed_obj=get_object(color, frame)
 			if grabbed_obj is True:
 				break
+			elif grabbed_obj is False:
+				print("lost object, need to look again")
+				obj_found = look4color(color, 180, - 170)
+				print("obj_found is: ", obj_found)
 
+		### deliver ###
 		drive2(2, 8)
+		relocalize()
+		# deliver
+		loco.grip("open")
+		local.reset_tick_count()
+		print("reversing")
+		loco.drive([0, loco.duty + 20, loco.duty + 20, 0])
+		while True:
+			avg_tick = (local.counterFL.value + \
+				local.counterBR.value) / 2
+			reverse_dist = local.tick_2_distance(avg_tick)
+			print("reverse_dist: ", reverse_dist)
+			if reverse_dist >= 1: # if we backed out 1 ft
+				loco.drive([0, 0, 0, 0])
+				print("breaking out of reverse loop")
+				break
 
+		# turn right until we face landing zone
+		print("turning to landing zone")
+		loco.drive([loco.duty + 20, 0, loco.duty + 20, 0]) # check
+		while True:
+			print("local.lr_imu_angle: ", local.lr_imu_angle)
+			with local.imu_angle_lock:
+				local.lr_imu_angle = local.imu_angle
+			if local.lr_imu_angle <= 0:
+				loco.drive([0, 0, 0, 0]) # stop turning
+				print("breaking out of left turn to landing loop")
+				break
+		local.y = local.y - reverse_dist - .50 # check update .75
+		print("backed up, should be at x:" , local.x, "y: ", local.y)
+		end = time.time()
+		print("time taken to get block", i, ":", abs(start - end))
+		i += 1
 
 def main2():
 
@@ -763,11 +721,29 @@ def main3():
 				break
 	relocalize()
 
+def main4():
+	while True:
+		with local.imu_angle_lock:
+			local.lr_imu_angle = local.imu_angle
+		lr_imu_angle_str = str(local.lr_imu_angle)
+		print("local.imu_angle: ", local.imu_angle)
+		decimal_idx = lr_imu_angle_str.find('.') # find position of decimal pt
+		if decimal_idx != -1:
+			decimal_places = len(lr_imu_angle_str) - decimal_idx - 1
+			print("decimal_places: ", decimal_places)
+			if decimal_places != 0:
+				break
+	color_found, frame = look4color("green", 0, 90)
+	print("color_found = ", color_found)
+	if color_found == True:
+		grabbed_obj = get_object("green", frame)
+
 
 if __name__ == "__main__":
 	start = time.time()
-	#main()
+	main()
 	#main2()
-	main3()
+	#main3()
+	#main4()
 	end = time.time()
 	print("time taken: ", abs(end - start), "seconds")
