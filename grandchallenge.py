@@ -29,7 +29,7 @@ def relocalize():
 	print("pointed at ", local.lr_imu_angle, "degrees")
 
 	# turn left until..
-	loco.drive([0, loco.duty_turn, 0, loco.duty_turn])
+	loco.drive([0, loco.duty_turn + 20, 0, loco.duty_turn + 20]) # check
 	while True:
 		with local.imu_angle_lock:
 			local.lr_imu_angle = local.imu_angle
@@ -86,7 +86,7 @@ def relocalize():
 	print("relocalized x to: ", local.x)
 
 	# turn right until..
-	loco.drive([40, 0, 40, 0])
+	loco.drive(loco.duty + 20, 0, loco.duty + 20, 0])
 	time.sleep(0.5)
 	dist2wall = 1000 # reset so we break out of next loop appropriately
 	while True:
@@ -134,25 +134,6 @@ def relocalize():
 	local.y = 10 - dist2wall 
 	print("relocalized y to: ", local.y)
 	print("final relocalized values x:", local.x, "y: ", local.y)
-
-def deliver():
-
-	print("\ncalled deliver!")
-	with local.imu_angle_lock:
-		local.lr_imu_angle = local.imu_angle
-	print("using tracking, currently located at x: ", local.x, "y: ", local.y, \
-		"pointed at: ", local.lr_imu_angle)
-
-	# relocalize
-	relocalize()
-
-	loco.grip("open") # drop off object
-
-	print("reversing out of construction zone!")
-	loco.drive([0, loco.duty_turn, 0, loco.duty_turn])
-	# reverse until we're 
-#	while True:
-
 
 
 def get_object(color, frame):
@@ -298,7 +279,7 @@ def get_object(color, frame):
 			#if ans == 'y':
 			#	break
 		# obj should be close and center enough by now
-		loco.drive([30, 0, 0, 30]) # drive straight
+		loco.drive([loco.duty - 10, 0, 0, loco.duty - 10]) # drive straight
 		while True:
 			frame = percep.get_pic()
 			edged = percep.detect_color(frame, color)
@@ -311,7 +292,7 @@ def get_object(color, frame):
 					# record angle before driving straight
 					with local.imu_angle_lock:
 						local.lr_imu_angle = local.imu_angle
-					loco.drive([30, 0, 0, 30]) # drive to grab object
+					loco.drive([loco.duty, 0, 0, loco.duty]) # drive to grab object
 					_, _ = local.get_tick_count() # update tick count
 					# 3 inches = .0732m, and 4687 ticks/m
 					avg_tick = (local.counterFL.value + \
@@ -412,8 +393,6 @@ def look4color(color, lt_angle, rt_angle):
 
 		i = 0
 
-		# this works best when not fully charged batteries
-		#loco.drive([0, loco.duty_turn + 5, 0, loco.duty_turn + 5]) # check
 		while True:
 			frame = percep.get_pic() # look for obj
 			# check for object
@@ -431,11 +410,11 @@ def look4color(color, lt_angle, rt_angle):
 				if angle_roc >= local.high_angle_roc:
 					print("decreasing left turn speed..")
 					if angle_roc >= local.max_angle_roc:
-						pin33 -= 6.5 # check all these
-						pin37 -= 6.5
+						pin33 -= 5.5 # check all these
+						pin37 -= 5.5
 					else:
-						pin33 -= 4.5
-						pin37 -= 4.5
+						pin33 -= 1.5
+						pin37 -= 1.5
 					loco.drive([0, pin33, 0, pin37])
 					#loco.drive([0, pin33, 0, loco.duty_turn - 17])
 				elif angle_roc <= local.min_angle_roc:
@@ -455,7 +434,7 @@ def look4color(color, lt_angle, rt_angle):
 				# if object is close to center
 				with local.imu_angle_lock:
 						local.lr_imu_angle = local.imu_angle
-				if abs(percep.get_angle2center(cx)) <= 3: # check
+				if abs(percep.get_angle2center(cx)) <= 4: # check
 					loco.drive([0, 0, 0, 0]) # stop
 					# get obj angle
 
@@ -511,8 +490,8 @@ def look4color(color, lt_angle, rt_angle):
 				if angle_roc >= local.high_angle_roc:
 					print("decreasing right turn speed..")
 					if angle_roc >= local.max_angle_roc:
-						pin31 -= 4.5 #check
-						pin35 -= 4.5
+						pin31 -= 5.5 #check
+						pin35 -= 5.5
 					else:
 						pin31 -= 1.5
 						pin35 -= 1.5
@@ -535,7 +514,7 @@ def look4color(color, lt_angle, rt_angle):
 				# if object is close to center
 				with local.imu_angle_lock:
 					local.lr_imu_angle = local.imu_angle
-				if abs(percep.get_angle2center(cx)) <= 3:
+				if abs(percep.get_angle2center(cx)) <= 4:
 					loco.drive([0, 0, 0, 0]) # stop
 					print("obj is at: ", local.lr_imu_angle, "degrees")
 					#while True:
@@ -553,7 +532,6 @@ def look4color(color, lt_angle, rt_angle):
 			t2 = time.time()
 
 			# check this if statement
-			# else if the bot has turned right > rt_angledegrees
 			print("prior_imu_angle: ", local.prior_imu_angle)
 			print("lr_imu_angle: ", local.lr_imu_angle)
 			if local.lr_imu_angle <= rt_angle:
