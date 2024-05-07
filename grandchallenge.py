@@ -62,7 +62,7 @@ def relocalize():
 					break
 			dist2wall = percep.measure_distance()
 			print("dist2wall: ", dist2wall)
-			if dist2wall <= 1.95:
+			if dist2wall <= 1.98:
 				break
 
 	time.sleep(0.5)
@@ -696,7 +696,7 @@ def main():
 					avg_tick = (local.counterFL.value + \
 						local.counterBR.value) / 2
 					reverse_dist = local.tick_2_distance(avg_tick)
-					if reverse_dist >= 1:
+					if reverse_dist >= .5:
 						loco.drive([0, 0, 0, 0])
 						break
 
@@ -732,14 +732,15 @@ def main():
 				local.counterBR.value) / 2
 			reverse_dist = local.tick_2_distance(avg_tick)
 			print("reverse_dist: ", reverse_dist)
-			if reverse_dist >= 1: # if we backed out 1 ft
+			if reverse_dist >= .75: # if we backed out 1 ft
 				loco.drive([0, 0, 0, 0])
 				print("breaking out of reverse loop")
 				local.y = local.y - reverse_dist - .50 # check update .75
 				print("backed up, should be at x:" , local.x, "y: ", local.y)
 				break
 		loco.grip("close")
-		turn2(10)
+		#drive2(4,7)
+		turn2(15)
 
 		while True:
 			ans = input("check location")
