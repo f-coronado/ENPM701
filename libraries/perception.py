@@ -15,8 +15,8 @@ class Perception:
 		self.font = cv.FONT_HERSHEY_SIMPLEX
 		self.green_lower = (38, 45, 95) # values for home 4/21
 		self.green_upper = (65, 220, 255) # values for home 4/21
-		self.blue_lower = (72, 46, 64) # values from session1
-		self.blue_upper = (152, 178, 220) # values from session1
+		self.blue_lower = (80, 70, 80) # values from session1
+		self.blue_upper = (152, 195, 245) # values from session1
 		self.red_lower = (167, 69, 141) # values from session1
 		self.red_upper = (183, 170, 255) # values from session1
 		self.cap = cv.VideoCapture(0)

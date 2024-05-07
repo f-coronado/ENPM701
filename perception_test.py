@@ -9,9 +9,8 @@ def main3():
 	while True:
 		print("distance in feet is: ", perception.measure_distance())
 
-def main2():
-	frame = perception.get_pic()
-	edged = perception.detect_color(frame, "green")
+def main2(frame, color):
+	edged = perception.detect_color(frame, color)
 	cv.imshow('edged: ', edged)
 	#print("result of detect_contours: ", perception.detect_contours(edged, frame), "is of type:" , type(perception.detect_contours(edged, frame)))
 	contours, _, _, edged, _, _ = perception.detect_contours(edged, frame)
@@ -55,5 +54,16 @@ def main():
 
 if __name__ == "__main__":
 	#main()
-	main2()
+	color = "green"
+	frame = cv.imread("sessions/close2_rightofbluewall.jpg")
+	main2(frame, color)
+	frame = cv.imread("sessions/close2bluewall.jpg")
+	main2(frame, color)
+	frame = cv.imread("sessions/close2bluewall_620pm.jpg")
+	main2(frame, color)
+	frame = cv.imread("sessions/far2_rightofbluewall.jpg")
+	main2(frame, color)
+	frame = cv.imread("sessions/farFromblueWall.jpg")
+	main2(frame, color)
+
 	#main3()
