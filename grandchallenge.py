@@ -854,12 +854,12 @@ def main7():
 
 if __name__ == "__main__":
 	start = time.time()
-	#main()
+	main()
 	#main2()
 	#main3()
 	#main4()
 	#main5()
 	#main6()
-	main7()
+	#main7()
 	end = time.time()
 	print("time taken: ", abs(end - start), "seconds")
