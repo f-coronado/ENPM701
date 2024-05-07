@@ -1,3 +1,4 @@
+
 import RPi.GPIO as GPIO
 import cv2 as cv
 import numpy as np
@@ -363,8 +364,8 @@ def look4color(color, lt_angle, rt_angle):
 	if lt_angle is not None: # if we want to turn left
 		print("turning left to: ", lt_angle, "degrees")
 		# start turning left
-		pin33 = loco.duty_turn - 5 # check
-		pin37 = loco.duty_turn - 5 # check
+		pin33 = loco.duty_turn + 5 # check
+		pin37 = loco.duty_turn + 5 # check
 		loco.drive([0, pin33, 0, pin37]) # check
 
 		i = 0
@@ -447,8 +448,8 @@ def look4color(color, lt_angle, rt_angle):
 	if rt_angle is not None:
 		print("turning right to: ", lt_angle, "degrees")
 		# start turning right, thise config works best when batteries are not fully charged
-		pin31 = loco.duty_turn
-		pin35 = loco.duty_turn
+		pin31 = loco.duty_turn + 5
+		pin35 = loco.duty_turn + 5
 		loco.drive([pin31, 0, pin35, 0]) # check
 		while True:
 			frame = percep.get_pic()
@@ -528,10 +529,10 @@ def drive2(targ_x, targ_y):
 	target_angle , distance = local.get_angle_dist(targ_x, targ_y)
 	print("target angle is: ", target_angle)
 	print("driving to x: ", targ_x, "y: ", targ_y)
-	while True:
-		ans = input("want to continue? enter y or n: ")
-		if ans == 'y':
-			break
+	#while True:
+		#ans = input("want to continue? enter y or n: ")
+		#if ans == 'y':
+		#	break
 
 	# turn in this while loop
 	while True:
@@ -565,10 +566,10 @@ def drive2(targ_x, targ_y):
 	current_distance = 0
 	print("current_distance: ", current_distance)
 
-	while True:
-		ans = input("want to continue? enter y or n: ")
-		if ans == 'y':
-			break
+	#while True:
+		#ans = input("want to continue? enter y or n: ")
+		#if ans == 'y':
+			#break
 	inc = 40
 	loco.drive([loco.duty + inc, 0, 0, loco.duty + inc]) # drive straight
 
@@ -660,7 +661,7 @@ def main():
 				break
 
 	i = 0
-	order = ['green', 'red', 'red', 'red', 'red', 'red', 'red', 'red', 'red'] # update
+	order = ['blue', 'red', 'red', 'red', 'red', 'red', 'red'] # update
 	for color in order:
 		start = time.time()
 		### 2: look4color ###
@@ -742,10 +743,10 @@ def main():
 		#drive2(4,7)
 		turn2(15)
 
-		while True:
-			ans = input("check location")
-			if ans == 'y':
-				break
+		#while True:
+			#ans = input("check location")
+			#if ans == 'y':
+				#break
 
 		# turn right until we face landing zone
 		#print("turning to landing zone")
@@ -806,14 +807,13 @@ def main4():
 			if decimal_places != 0:
 				break
 
-	colorList = ["green", "red", "green", "red"]
+	colorList = ["blue", "red", "green", "red"]
 
 	for color in colorList:
 		print("looking for ", color)
-		if color == "green":
-			color_found, frame = look4color(color, 120, 0)
-		elif color == "red":
-			color_found, frame = look4color(color, 0, -120)
+		color_found, frame = look4color(color, 120, 0)
+		#elif color == "red":
+		#	color_found, frame = look4color(color, 0, -120)
 		print("color_found = ", color_found)
 		#if color_found == True:
 		#	grabbed_obj = get_object("green", frame)
@@ -858,10 +858,10 @@ def main5():
 			local.x -= reverse_dist * math.cos(math.radians(local.lr_imu_angle))
 			local.y -= reverse_dist * math.sin(math.radians(local.lr_imu_angle))
 			print("x: ", local.x, "y: ", local.y)
-			while True:
-				ans = input("do the updated coordinates look right after reversing?")
-				if ans == 'y':
-					break
+			#while True:
+				#ans = input("do the updated coordinates look right after reversing?")
+				#if ans == 'y':
+					#break
 			if grabbed_obj == "left":
 				obj_found = look4color(color, \
 					local.lr_imu_angle + 45, 0)
@@ -876,9 +876,9 @@ def main6():
 
 if __name__ == "__main__":
 	start = time.time()
-	#main()
+	main()
 	#main2()
-	main3()
+	#main3()
 	#main4()
 	#main5()
 	#main6()

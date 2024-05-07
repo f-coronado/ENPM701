@@ -54,6 +54,11 @@ def main():
 
 if __name__ == "__main__":
 	#main()
+	color = "blue"
+	frame = cv.imread("test_pic.jpg")
+	main2(frame, color)
+
+
 	color = "green"
 	frame = cv.imread("sessions/close2_rightofbluewall.jpg")
 	main2(frame, color)
