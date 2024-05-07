@@ -76,7 +76,7 @@ def relocalize():
 	print("relocalized x to: ", local.x)
 
 	# turn right until..
-	loco.drive([loco.duty + 20, 0, loco.duty + 20, 0])
+	loco.drive([loco.duty_turn + 14, 0, loco.duty_turn + 14, 0])
 	time.sleep(0.5)
 	dist2wall = 1000 # reset so we break out of next loop appropriately
 	while True:
@@ -84,7 +84,7 @@ def relocalize():
 			local.lr_imu_angle = local.imu_angle
 		#print("pointed at ", local.lr_imu_angle, "degrees")
 		# if we're facing the top wall break out of while loop
-		if local.lr_imu_angle <= 91 :
+		if local.lr_imu_angle <= 92 :
 			print("should be facing top wall now")
 			print("angle is: ", local.lr_imu_angle)
 			loco.drive([0, 0, 0, 0]) # stop
@@ -181,10 +181,10 @@ def get_object(color, frame):
 					start_angle))
 				print("current location is x: ", local.x, "y: ", local.y)
 				print("updating coordinates x:", local.x, "y: ", local.y)
-				while True:
-					ans = input("check coords")
-					if ans == 'y':
-						break
+				#while True:
+					#ans = input("check coords")
+					#if ans == 'y':
+						#break
 
 				if cx <= 320:
 					return "left"
@@ -306,10 +306,10 @@ def get_object(color, frame):
 				print("current location is x: ", local.x, "y: ", local.y)
 				print("current heading: ", local.lr_imu_angle)
 
-				while True:
-					ans = input("check coords")
-					if ans == 'y':
-						break
+				#while True:
+					#ans = input("check coords")
+					#if ans == 'y':
+						#break
 				return True
 			# if the object was lost
 			elif w == 0 and h == 0:
@@ -327,10 +327,10 @@ def get_object(color, frame):
 					start_angle))
 				print("elif w==0 and h == 0")
 				print("current location is x: ", local.x, "y: ", local.y)
-				while True:
-					ans = input("check coords")
-					if ans == 'y':
-						break
+				#while True:
+					#ans = input("check coords")
+					#if ans == 'y':
+						#break
 				if cx <= 320:
 					return "left"
 				else:
@@ -876,9 +876,9 @@ def main6():
 
 if __name__ == "__main__":
 	start = time.time()
-	main()
+	#main()
 	#main2()
-	#main3()
+	main3()
 	#main4()
 	#main5()
 	#main6()

@@ -1,3 +1,4 @@
+
 import RPi.GPIO as GPIO
 import time
 import cv2 as cv
@@ -19,7 +20,7 @@ class Locomotion:
 		self.gripper_pwm.start(3.5) # start gripper in closed position
 
 		self.duty = 30 # 30 works best in class
-		self.duty_turn = 35 # 35 works best on desktop, 70 works best on floor
+		self.duty_turn = 50 # 35 works best on desktop, 70 works best on floor
 					# in class this was 63
 		self.reduce = 10 # 10 worked in class
 
