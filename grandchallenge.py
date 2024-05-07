@@ -145,7 +145,7 @@ def get_object(color, frame):
 		pin37 = loco.duty # check update
 		pin31_opt = pin31
 		pin37_opt = pin37
-		loco.drive([pin31, 0, 0, pin37]) # drive straight to obj
+		loco.drive([pin31 - 6, 0, 0, pin37 - 6]) # drive straight to obj
 		j = 0
 		while True:
 			print("current location is x:", local.x, "y: ", local.y)
@@ -264,11 +264,6 @@ def get_object(color, frame):
 			j += 1
 
 		print("obj should be close and centered enough by now")
-		#while True:
-			#print("robot thinks it's at x: ", local.x, "y: ", local.y)
-			#ans = input("is object close enough and aligned?")
-			#if ans == 'y':
-			#	break
 		# obj should be close and center enough by now
 		loco.drive([loco.duty - 10, 0, 0, loco.duty - 10]) # drive straight
 		while True:
@@ -307,10 +302,6 @@ def get_object(color, frame):
 				print("current location is x: ", local.x, "y: ", local.y)
 				print("current heading: ", local.lr_imu_angle)
 
-				#while True:
-					#ans = input("check coords")
-					#if ans == 'y':
-						#break
 				return True
 			# if the object was lost
 			elif w == 0 and h == 0:
@@ -328,10 +319,6 @@ def get_object(color, frame):
 					start_angle))
 				print("elif w==0 and h == 0")
 				print("current location is x: ", local.x, "y: ", local.y)
-				#while True:
-					#ans = input("check coords")
-					#if ans == 'y':
-						#break
 				if cx <= 320:
 					return "left"
 				else:
@@ -416,10 +403,6 @@ def look4color(color, lt_angle, rt_angle):
 					# get obj angle
 
 					print("bot is pointed at: ",local.lr_imu_angle, "degrees")
-					#while True:
-					#	ans = input("exiting look4color, want to continue?")
-					#	if ans == 'y':
-					#		break
 					return True, frame
 					#get_object(color, frame) # consider moving this out?
 
@@ -494,10 +477,6 @@ def look4color(color, lt_angle, rt_angle):
 				if abs(percep.get_angle2center(cx)) <= 4:
 					loco.drive([0, 0, 0, 0]) # stop
 					print("obj is at: ", local.lr_imu_angle, "degrees")
-					#while True:
-					#	ans = input("exiting look4color want to continue?: ")
-					#	if ans == 'y':
-					#		break
 					return True, frame
 					#get_object(color, frame) # consider moving this out of this function?
 
@@ -529,10 +508,6 @@ def drive2(targ_x, targ_y):
 	target_angle , distance = local.get_angle_dist(targ_x, targ_y)
 	print("target angle is: ", target_angle)
 	print("driving to x: ", targ_x, "y: ", targ_y)
-	#while True:
-		#ans = input("want to continue? enter y or n: ")
-		#if ans == 'y':
-		#	break
 
 	# turn in this while loop
 	while True:
@@ -566,10 +541,6 @@ def drive2(targ_x, targ_y):
 	current_distance = 0
 	print("current_distance: ", current_distance)
 
-	#while True:
-		#ans = input("want to continue? enter y or n: ")
-		#if ans == 'y':
-			#break
 	inc = 40
 	loco.drive([loco.duty + inc, 0, 0, loco.duty + inc]) # drive straight
 
@@ -622,7 +593,7 @@ def turn2(angle):
 	print("pointed at: ", local.lr_imu_angle)
 	# turn right
 	if local.lr_imu_angle >= angle:
-		loco.drive([loco.duty_turn + 30, 0, loco.duty_turn + 30, 0])
+		loco.drive([loco.duty_turn + 17, 0, loco.duty_turn + 17, 0])
 		while True:
 			with local.imu_angle_lock:
 				local.lr_imu_angle = local.imu_angle
@@ -630,7 +601,7 @@ def turn2(angle):
 				break
 	# turn left
 	else:
-		loco.drive([0, loco.duty_turn + 30, 0, loco.duty_turn + 30])
+		loco.drive([0, loco.duty_turn + 17, 0, loco.duty_turn + 17])
 		while True:
 			with local.imu_angle_lock:
 				local.lr_imu_angle = local.imu_angle
@@ -661,7 +632,7 @@ def main():
 				break
 
 	i = 0
-	order = ['blue', 'red', 'red', 'red', 'red', 'red', 'red'] # update
+	order = ['red', 'green', 'blue', 'red', 'green', 'blue', 'red', 'green', 'blue'] # update
 	for color in order:
 		start = time.time()
 		### 2: look4color ###
@@ -706,10 +677,6 @@ def main():
 				local.x -= reverse_dist * math.cos(math.radians(local.lr_imu_angle))
 				local.y -= reverse_dist * math.sin(math.radians(local.lr_imu_angle))
 				print("x: ", local.x, "y: ", local.y)
-				while True:
-					ans = input("do the updated coordinates after reversinglook right after reversing?")
-					if ans == 'y':
-						break
 				if grabbed_obj == "left":
 					obj_found = look4color(color, \
 						local.lr_imu_angle + 45, 0)
@@ -743,10 +710,6 @@ def main():
 		#drive2(4,7)
 		turn2(15)
 
-		#while True:
-			#ans = input("check location")
-			#if ans == 'y':
-				#break
 
 		# turn right until we face landing zone
 		#print("turning to landing zone")
@@ -874,13 +837,29 @@ def main6():
 	frame = percep.get_pic()
 	local.email(frame)
 
+def main7():
+	while True:
+		with local.imu_angle_lock:
+			local.lr_imu_angle = local.imu_angle
+		lr_imu_angle_str = str(local.lr_imu_angle)
+		print("local.imu_angle: ", local.imu_angle)
+		decimal_idx = lr_imu_angle_str.find('.') # find position of decimal pt
+		if decimal_idx != -1:
+			decimal_places = len(lr_imu_angle_str) - decimal_idx - 1
+			print("decimal_places: ", decimal_places)
+			if decimal_places != 0:
+				break
+
+	turn2(45)
+
 if __name__ == "__main__":
 	start = time.time()
-	main()
+	#main()
 	#main2()
 	#main3()
 	#main4()
 	#main5()
 	#main6()
+	main7()
 	end = time.time()
 	print("time taken: ", abs(end - start), "seconds")
