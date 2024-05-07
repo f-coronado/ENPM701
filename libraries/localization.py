@@ -13,6 +13,7 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 import threading
 import multiprocessing
+import cv2 as cv
 
 class Localization:
 
@@ -217,12 +218,13 @@ class Localization:
 
 
 
-	def email(self):
+	def email(self, frame):
 		# define timestamp and record a image
 		pic_time = datetime.now().strftime('%Y%m%d%H%M%S')
-		command = 'raspistill -w 1280 -h 720 -vf -hf -o ' + pic_time + '.jpg'
-		os.system(command)
+		#command = 'raspistill -w 1280 -h 720 -vf -hf -o ' + pic_time + '.jpg'
+		#os.system(command)
 
+		cv.imwrite(pic_time + '.jpg', frame)
 		# email info
 		smtpUser = 'fabrizzio.enpm701@gmail.com'
 		#smtpPass = 'jaw7-bold-imply'

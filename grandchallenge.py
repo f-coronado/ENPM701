@@ -19,6 +19,7 @@ print('loaded localization')
 loco = Locomotion()
 print('loaded locomotion')
 
+
 def relocalize():
 	print("\ncalled relocalize!")
 	print("robot thinks it's at (x, y): ", local.x, local.y)
@@ -29,7 +30,7 @@ def relocalize():
 	print("pointed at ", local.lr_imu_angle, "degrees")
 
 	# turn left until..
-	loco.drive([0, loco.duty_turn + 20, 0, loco.duty_turn + 20]) # check
+	loco.drive([0, loco.duty_turn + 13, 0, loco.duty_turn + 13]) # check
 	while True:
 		with local.imu_angle_lock:
 			local.lr_imu_angle = local.imu_angle
@@ -50,7 +51,7 @@ def relocalize():
 	if dist2wall >= 2:
 		# drive straight to left wall
 		loco.drive([loco.duty, 0, 0, loco.duty])
-		print("driving to top wall")
+		print("driving to left wall")
 		for i in range(10):
 			while True:
 				avg_tick = (local.counterFL.value + local.counterBR.value) / 2
@@ -63,17 +64,6 @@ def relocalize():
 			print("dist2wall: ", dist2wall)
 			if dist2wall <= 1.95:
 				break
-	# drive straight to left wall
-	#loco.drive([loco.duty, 0, 0, loco.duty])
-	#print("driving to left wall")
-	#while True:
-		#dist2wall = percep.measure_distance()
-		#avg_tick = (local.counterFL.value + local.counterBR.value) / 2
-		#enc_dist = local.tick_2_distance(avg_tick)
-		#if dist2wall <= 1.5:
-		#if enc_dist >= .5: # if we drove 1 foot towards the wall
-			#loco.drive([0, 0, 0, 0])
-			#break
 
 	time.sleep(0.5)
 	dist_list = []
@@ -94,7 +84,7 @@ def relocalize():
 			local.lr_imu_angle = local.imu_angle
 		#print("pointed at ", local.lr_imu_angle, "degrees")
 		# if we're facing the top wall break out of while loop
-		if local.lr_imu_angle <= 93 :
+		if local.lr_imu_angle <= 91 :
 			print("should be facing top wall now")
 			print("angle is: ", local.lr_imu_angle)
 			loco.drive([0, 0, 0, 0]) # stop
@@ -131,7 +121,7 @@ def relocalize():
 	dist2wall = sum(dist_list)/len(dist_list)
 	print("top wall is at a distance of: ", percep.dist2wall)
 	# measure distance and relocalize x
-	local.y = 10 - dist2wall 
+	local.y = 10 - dist2wall
 	print("relocalized y to: ", local.y)
 	print("final relocalized values x:", local.x, "y: ", local.y)
 
@@ -302,6 +292,7 @@ def get_object(color, frame):
 						break
 				loco.grip("close")
 				loco.drive([0, 0, 0, 0])
+				local.email(frame)
 				avg_tick = (local.counterFL.value + local.counterBR.value) / 2
 				distance = local.tick_2_distance(avg_tick)
 				print("distance traveled inside of get_object(): ", \
@@ -315,21 +306,6 @@ def get_object(color, frame):
 				print("current location is x: ", local.x, "y: ", local.y)
 				print("current heading: ", local.lr_imu_angle)
 
-				#frame = percep.get_pic()
-				#edged_frame = percep.detect_color(frame, color)
-				#frame, cx, cy, edged_frame, w, h = \
-				#	percep.detect_contours(edged_frame, frame)
-				#if abs(cx) >= 400:
-				#	print("did not grab obj, lost it")
-				#	if cx <= 320:
-				#		return "left"
-				#	else:
-				#		return "right"
-				#while True:
-				#	ans = input("check if we grabbed obj and position looks accurate")
-				#	if ans == 'y':
-				#		break
-				cv.destroyAllWindows()
 				while True:
 					ans = input("check coords")
 					if ans == 'y':
@@ -744,7 +720,10 @@ def main():
 		### deliver ###
 		drive2(2, 8)
 		relocalize()
+		loco.drive([0, 0, 0, 0])
 		loco.grip("open")
+		frame = percep.get_pic()
+		local.email(frame)
 		local.reset_tick_count()
 		print("reversing")
 		loco.drive([0, loco.duty_turn + 20, loco.duty_turn + 20, 0])
@@ -890,12 +869,17 @@ def main5():
 					local.lr_imu_angle - 45)
 			#print("obj_found is: ", obj_found)
 
+def main6():
+	frame = percep.get_pic()
+	local.email(frame)
+
 if __name__ == "__main__":
 	start = time.time()
-	#main()
+	main()
 	#main2()
-	main3()
+	#main3()
 	#main4()
 	#main5()
+	#main6()
 	end = time.time()
 	print("time taken: ", abs(end - start), "seconds")
