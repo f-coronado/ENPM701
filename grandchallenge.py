@@ -198,7 +198,24 @@ def get_object(color, frame):
 				print("lost object..")
 				loco.drive([0, 0, 0, 0])
 				cv.destroyAllWindows()
+				avg_tick = (local.counterFL.value + local.counterBR.value) / 2
+				distance = local.tick_2_distance(avg_tick)
+				print("distance traveled inside of get_object(): ", \
+				distance)
+
+				# update position before returning
+				local.x = local.x + distance * math.cos(math.radians(\
+					start_angle))
+				local.y = local.y + distance * math.sin(math.radians(\
+					start_angle))
+				print("current location is x: ", local.x, "y: ", local.y)
 				print("updating coordinates x:", local.x, "y: ", local.y)
+				
+				while True:
+					ans = input("check coords")
+					if ans == 'y':
+						break
+
 				if cx <= 320:
 					return "left"
 				else:
@@ -310,10 +327,9 @@ def get_object(color, frame):
 				print("distance traveled inside of get_object(): ", \
 				distance)
 
-				# update position before turning
+				# update position before returning
 				local.x = local.x + distance * math.cos(math.radians(\
 					start_angle))
-					#local.lr_imu_angle))
 				local.y = local.y + distance * math.sin(math.radians(\
 					start_angle))
 				print("current location is x: ", local.x, "y: ", local.y)
@@ -334,12 +350,31 @@ def get_object(color, frame):
 				#	if ans == 'y':
 				#		break
 				cv.destroyAllWindows()
+				while True:
+					ans = input("check coords")
+					if ans == 'y':
+						break
 				return True
 			# if the object was lost
 			elif w == 0 and h == 0:
 				print("lost object..")
 				loco.drive([0, 0, 0, 0])
-				cv.destroyAllWindows()
+				avg_tick = (local.counterFL.value + local.counterBR.value) / 2
+				distance = local.tick_2_distance(avg_tick)
+				print("distance traveled inside of get_object(): ", \
+					distance)
+
+				# update position before returning
+				local.x = local.x + distance * math.cos(math.radians(\
+					start_angle))
+				local.y = local.y + distance * math.sin(math.radians(\
+					start_angle))
+				print("elif w==0 and h == 0")
+				print("current location is x: ", local.x, "y: ", local.y)
+				while True:
+					ans = input("check coords")
+					if ans == 'y':
+						break
 				if cx <= 320:
 					return "left"
 				else:
@@ -384,7 +419,6 @@ def look4color(color, lt_angle, rt_angle):
 			frame = percep.get_pic() # look for obj
 			# check for object
 			edged = percep.detect_color(frame, color)
-			print("edged: ")
 
 			# turning control logic
 			t1 = time.time()
@@ -414,7 +448,6 @@ def look4color(color, lt_angle, rt_angle):
 
 
 			if percep.detect_contours(edged, frame) is not None:
-				print("obj is in fov")
 				frame, cx, cy, edged, w, h = percep.detect_contours(edged, frame)
 				if abs(percep.get_angle2center(cx)) <= 10: # check
 					# slow down
@@ -475,15 +508,15 @@ def look4color(color, lt_angle, rt_angle):
 					local.lr_imu_angle = local.imu_angle
 				# th1 is local.lr_imu_angle
 				angle_roc = abs(th2 - local.lr_imu_angle) / abs(t2 - t1)
-				print("rate of change in angle is: ", angle_roc)
+				print("rate of change in angle is: ", round(angle_roc, 2))
 				if angle_roc >= local.high_angle_roc:
 					print("decreasing right turn speed..")
 					if angle_roc >= local.max_angle_roc:
-						pin31 -= 4.5
+						pin31 -= 4.5 #check
 						pin35 -= 4.5
 					else:
-						pin31 -= 2.5
-						pin35 -= 2.5
+						pin31 -= 1.5
+						pin35 -= 1.5
 					loco.drive([pin31, 0, pin35, 0])
 				elif angle_roc <= local.min_angle_roc:
 					pin31 += .75
@@ -718,7 +751,7 @@ def main():
 				local.y -= reverse_dist * math.sin(math.radians(local.lr_imu_angle))
 				print("x: ", local.x, "y: ", local.y)
 				while True:
-					ans = input("do the updated coordinates look right after reversing?")
+					ans = input("do the updated coordinates after reversinglook right after reversing?")
 					if ans == 'y':
 						break
 				if grabbed_obj == "left":
