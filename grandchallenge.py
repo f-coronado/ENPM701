@@ -86,7 +86,7 @@ def relocalize():
 	print("relocalized x to: ", local.x)
 
 	# turn right until..
-	loco.drive(loco.duty + 20, 0, loco.duty + 20, 0])
+	loco.drive([loco.duty + 20, 0, loco.duty + 20, 0])
 	time.sleep(0.5)
 	dist2wall = 1000 # reset so we break out of next loop appropriately
 	while True:
@@ -471,8 +471,8 @@ def look4color(color, lt_angle, rt_angle):
 	if rt_angle is not None:
 		print("turning right to: ", lt_angle, "degrees")
 		# start turning right, thise config works best when batteries are not fully charged
-		pin31 = loco.duty_turn + 7
-		pin35 = loco.duty_turn + 7
+		pin31 = loco.duty_turn
+		pin35 = loco.duty_turn
 		loco.drive([pin31, 0, pin35, 0]) # check
 		while True:
 			frame = percep.get_pic()
@@ -566,14 +566,14 @@ def drive2(targ_x, targ_y):
 			time.sleep(1)
 			break
 		elif target_angle <= 0: # if we want to turn right
-			loco.drive([loco.duty_turn + 10, 0, loco.duty_turn + 8, 0])
+			loco.drive([loco.duty_turn + 20, 0, loco.duty_turn + 20, 0])
 			with local.imu_angle_lock:
 				local.lr_imu_angle = local.imu_angle
 			if abs(local.imu_angle - target_angle) <= 1: #current angle is more negative
 				loco.drive([0, 0, 0, 0]) # stop turning
 				break
 		elif target_angle > 0: # if we want to turn left
-			loco.drive([0, loco.duty_turn + 8, 0, loco.duty_turn + 5])
+			loco.drive([0, loco.duty_turn + 20, 0, loco.duty_turn + 20])
 			with local.imu_angle_lock:
 				local.lr_imu_angle = local.imu_angle
 			if abs(local.imu_angle - target_angle - 4) <= 1: # check this
@@ -639,12 +639,13 @@ def drive2(targ_x, targ_y):
 
 	## end of drive2(x, y)
 def turn2(angle):
+	print("called turn2! ")
 	with local.imu_angle_lock:
 		local.lr_imu_angle = local.imu_angle
 	print("pointed at: ", local.lr_imu_angle)
 	# turn right
 	if local.lr_imu_angle >= angle:
-		loco.drive([loco.duty_turn, 0, loco.duty_turn, 0])
+		loco.drive([loco.duty_turn + 30, 0, loco.duty_turn + 30, 0])
 		while True:
 			with local.imu_angle_lock:
 				local.lr_imu_angle = local.imu_angle
@@ -652,13 +653,14 @@ def turn2(angle):
 				break
 	# turn left
 	else:
-		loco.drive([0, loco.duty_turn, 0, loco.duty_turn])
+		loco.drive([0, loco.duty_turn + 30, 0, loco.duty_turn + 30])
 		while True:
 			with local.imu_angle_lock:
 				local.lr_imu_angle = local.imu_angle
 			if local.lr_imu_angle >= angle:
 				break
-	print("pointed at: ", local.lr_imu_angle)
+	loco.drive([0, 0, 0, 0])
+	print("exiting turn2, pointed at: ", local.lr_imu_angle)
 
 def main():
 
@@ -890,9 +892,9 @@ def main5():
 
 if __name__ == "__main__":
 	start = time.time()
-	main()
+	#main()
 	#main2()
-	#main3()
+	main3()
 	#main4()
 	#main5()
 	end = time.time()
