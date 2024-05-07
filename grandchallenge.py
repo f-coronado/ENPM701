@@ -210,7 +210,6 @@ def get_object(color, frame):
 					start_angle))
 				print("current location is x: ", local.x, "y: ", local.y)
 				print("updating coordinates x:", local.x, "y: ", local.y)
-				
 				while True:
 					ans = input("check coords")
 					if ans == 'y':
@@ -913,10 +912,10 @@ def main5():
 
 if __name__ == "__main__":
 	start = time.time()
-	#main()
+	main()
 	#main2()
 	#main3()
 	#main4()
-	main5()
+	#main5()
 	end = time.time()
 	print("time taken: ", abs(end - start), "seconds")
