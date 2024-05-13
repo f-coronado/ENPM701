@@ -182,15 +182,13 @@ def get_object(color, frame):
 					start_angle))
 				print("current location is x: ", local.x, "y: ", local.y)
 				print("updating coordinates x:", local.x, "y: ", local.y)
-				#while True:
-					#ans = input("check coords")
-					#if ans == 'y':
-						#break
 
 				if cx <= 320:
 					return "left"
 				else:
 					return "right"
+
+
 
 ### begin perception steering ###
 			if w >= 35 and h >= 50: # start perception to steer
@@ -211,7 +209,7 @@ def get_object(color, frame):
 					look4color(color, 135, None) # recenter object
 					loco.drive([0, 0, 0, 0]) # stop turning
 
-				loco.drive([loco.duty, 0, 0, loco.duty]) # drive straight
+				loco.drive([loco.duty - 5, 0, 0, loco.duty - 5]) # drive straight
 
 				if percep.object_check(w, h) is "open": # obj is near
 					print("object is near, opening gripper")
@@ -541,7 +539,7 @@ def drive2(targ_x, targ_y):
 	current_distance = 0
 	print("current_distance: ", current_distance)
 
-	inc = 40
+	inc = 30
 	loco.drive([loco.duty + inc, 0, 0, loco.duty + inc]) # drive straight
 
 	# drive forward in this while loop
@@ -593,7 +591,7 @@ def turn2(angle):
 	print("pointed at: ", local.lr_imu_angle)
 	# turn right
 	if local.lr_imu_angle >= angle:
-		loco.drive([loco.duty_turn + 17, 0, loco.duty_turn + 17, 0])
+		loco.drive([loco.duty_turn + 25, 0, loco.duty_turn + 25, 0])
 		while True:
 			with local.imu_angle_lock:
 				local.lr_imu_angle = local.imu_angle
@@ -601,7 +599,7 @@ def turn2(angle):
 				break
 	# turn left
 	else:
-		loco.drive([0, loco.duty_turn + 17, 0, loco.duty_turn + 17])
+		loco.drive([0, loco.duty_turn + 25, 0, loco.duty_turn + 25])
 		while True:
 			with local.imu_angle_lock:
 				local.lr_imu_angle = local.imu_angle
@@ -633,6 +631,7 @@ def main():
 
 	i = 0
 	order = ['red', 'green', 'blue', 'red', 'green', 'blue', 'red', 'green', 'blue'] # update
+	ang = 0
 	for color in order:
 		start = time.time()
 		### 2: look4color ###
@@ -663,7 +662,7 @@ def main():
 				print("currently at: x: ", local.x, "y: ", local.y)
 				local.reset_tick_count()
 				# reverse 1 ft
-				loco.drive([0, loco.duty, loco.duty])
+				loco.drive([0, loco.duty, loco.duty, 0])
 				while True:
 					avg_tick = (local.counterFL.value + \
 						local.counterBR.value) / 2
@@ -677,6 +676,7 @@ def main():
 				local.x -= reverse_dist * math.cos(math.radians(local.lr_imu_angle))
 				local.y -= reverse_dist * math.sin(math.radians(local.lr_imu_angle))
 				print("x: ", local.x, "y: ", local.y)
+				turn2(-20)
 				if grabbed_obj == "left":
 					obj_found = look4color(color, \
 						local.lr_imu_angle + 45, 0)
@@ -707,10 +707,10 @@ def main():
 				print("backed up, should be at x:" , local.x, "y: ", local.y)
 				break
 		loco.grip("close")
+		time.sleep(2)
 		#drive2(4,7)
-		turn2(15)
-
-
+		turn2(ang)
+		ang -= 20
 		# turn right until we face landing zone
 		#print("turning to landing zone")
 		#loco.drive([loco.duty_turn + 20, 0, loco.duty_turn + 20, 0]) # check

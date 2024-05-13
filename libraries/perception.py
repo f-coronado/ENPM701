@@ -118,11 +118,13 @@ class Perception:
 			w = 0
 			h = 0
 			# we always want to return something
+			print("object not detected")
 			return bgr_frame, cx, cy, edged_frame, w, h
 		areas = [cv.contourArea(c) for c in contours_]
 		max_idx = np.argmax(areas)
 		cont = contours_[max_idx]
 		x, y, w, h = cv.boundingRect(cont)
+
 		cv.rectangle(bgr_frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
 		#text = f"width: {w}. height: {h}"
 		#cv.putText(bgr_frame, text, (x - 100, y), self.font, 1, self.white, 2)
