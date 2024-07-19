@@ -1,4 +1,6 @@
 import RPi.GPIO as gpio
+from libraries.locomotion import Locomotion
+import time
 
 def init():
 	gpio.setmode(gpio.BOARD)
@@ -18,5 +20,6 @@ def gameover():
 
 init()
 gameover()
-
-
+loco = Locomotion()
+loco.grip("close")
+time.sleep(2)

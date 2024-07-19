@@ -5,7 +5,7 @@ from libraries.locomotion import Locomotion
 import matplotlib.pyplot as plt
 import time
 
-def get_imu_coords(ser, cnt):
+def get_imu_angle(ser, cnt):
 	while True:
 		#print("ser: ", ser.in_waiting)
 		if (ser.in_waiting > 0):
@@ -36,7 +36,7 @@ def get_imu_coords(ser, cnt):
 			z = float(values[2])
 			print("X:", x, "Y:", y, "Z:", z)
 
-			return x, y, z
+			return x
 
 
 
@@ -46,13 +46,15 @@ def main():
 	localization = Localization()
 	ser = serial.Serial('/dev/ttyUSB0', 9600) # identify serial connection
 	cnt = 0
+	initial_imu_angle = get_imu_angle(ser, cnt)
 	time.sleep(2)
 
 	sequence = input("Enter a sequence of commands separated by spaces. \nAvailable commands are: f, b, r, l:\n").split()
 	print("the sequence of commands entered was: \n", sequence)
 
 	max_count = 2343 # ticks needed for half a meter
-	turn_count = 975 # ticks needed for about 90 degrees
+	#turn_count = 580 # ticks needed for about 90 degrees left
+	turn_count = 1200 # ticks needed to turn about 90 degrees right
 	duty = 40
 	duty_turn = 100
 	enc_distances = []
@@ -83,13 +85,16 @@ def main():
 					locomotion.gameover()
 					print("cntrBR: ", cntrBR, "cntrFL: ", cntrFL)
 					avg_tick = (cntrBR + cntrFL) / 2
-					print("current encoder angle: ", localization.angle)
+					current_imu_angle = get_imu_angle(ser, cnt)
 
-					x, y, z = get_imu_coords(ser, cnt)
+					print("current encoder angle: ", localization.angle)
+					print("starting imu_angle: ", initial_imu_angle)
+					print("current_imu_angle: ", current_imu_angle)
 					localization.x_imu.append(x)
 					localization.y_imu.append(y)
 					localization.z_imu.append(z)
 					cntrBR, cntrFL = localization.reset_tick_count()
+
 					break
 
 
@@ -122,7 +127,7 @@ def main():
 						localization.update_enc_angle(0, command)
 						print("current encoder angle is: ", localization.angle)
 
-						x, y, z = get_imu_coords(ser, cnt)
+						x, y, z = get_imu_angle(ser, cnt)
 						localization.x_imu.append(x)
 						localization.y_imu.append(y)
 						localization.z_imu.append(z)
@@ -142,21 +147,23 @@ def main():
 
 	enc_positions =list(zip(localization.x_pos, localization.y_pos))
 	print("enc_positions: ", enc_positions)
-	plt.plot(localization.x_pos, localization.y_pos)
-	plt.title('plot of encoder positions')
-	plt.xlabel('x [meters]')
-	plt.ylabel('y [meters]')
-	plt.grid(True)
-	plt.show()
+#	plt.plot(localization.x_pos, localization.y_pos)
+#	plt.title('plot of encoder positions')
+#	plt.xlabel('x [meters]')
+#	plt.ylabel('y [meters]')
+#	plt.grid(True)
+#	plt.show()
 
 	imu_positions = list(zip(localization.x_imu, localization.y_imu))
-	print("imu_positions: ", imu_positions)
-	plt.plot(localization.x_imu, localization.y_imu)
-	plt.title('plot of imu positions')
-	plt.xlabel('x [meters]')
-	plt.ylabel('y [meters]')
-	plt.grid(True)
-	plt.show()
+#	print("imu_positions: ", imu_positions)
+#	plt.plot(localization.x_imu, localization.y_imu)
+#	plt.title('plot of imu positions')
+#	plt.xlabel('x [meters]')
+#	plt.ylabel('y [meters]')
+#	plt.grid(True)
+#	plt.show()
+	print("initial imu angle: ", initial_imu_angle)
+	print("final imu angle: ", get_imu_angle(ser, cnt))
 
 if __name__ == "__main__":
 	main()

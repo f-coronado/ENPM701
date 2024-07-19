@@ -20,6 +20,7 @@ start_time = cv2.getTickCount()
 while True:
     # Capture frame-by-frame
     ret, frame = video_capture.read()
+    frame = cv2.flip(frame, -1)
 
     if not ret:
         print("Error: Unable to capture frame.")
