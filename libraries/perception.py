@@ -13,6 +13,7 @@ class Perception:
 		self.white = (255, 255, 255)
 		self.black = (0, 0, 0)
 		self.font = cv.FONT_HERSHEY_SIMPLEX
+<<<<<<< HEAD
 		self.green_lower = (38, 45, 95) # values for home 4/21
 		self.green_upper = (65, 220, 255) # values for home 4/21
 		self.blue_lower = (80, 70, 80) # values from session1
@@ -79,6 +80,9 @@ class Perception:
 	def write_on_frame(self, frame, text):
 		cv.putText(frame, text, (100, 20), self.font, 1, self.white, 2)
 		return frame
+=======
+		self.white = (255, 255, 255)
+>>>>>>> main
 
 	def add_channels(self, frame):
 		frame = np.expand_dims(frame, axis = -1)
@@ -133,6 +137,7 @@ class Perception:
 
 		return bgr_frame, cx, cy, edged_frame, w, h
 
+<<<<<<< HEAD
 	def object_check(self, w, h):
 		#if w >= 160 and h >= 65:
 		#	return True
@@ -140,6 +145,10 @@ class Perception:
 		#	return True
 		if w > 210 and h <= 155:
 			return "grip"
+=======
+			cv.circle(bgr_frame, center, radius, (0, 0, 255), 2)
+			cv.putText(bgr_frame, 'circle radius is' + str(radius), (100, 100), self.font, 1, self.white, 1)
+>>>>>>> main
 
 		elif w >= 60 and h >= 85:
 			return "open"

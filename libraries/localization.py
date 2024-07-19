@@ -54,6 +54,7 @@ class Localization:
 		self.y_imu = []
 		self.z_imu = []
 		self.prior_imu_angle = 0 # the direction where the robot is pointed initially is 0 degrees
+<<<<<<< HEAD
 		self.lr_imu_angle = 0 # used to store last recorded imu_angle from thread
 		self.ser = serial.Serial('/dev/ttyUSB0', 9600)
 		self.imu_angle = 0 # used to get imu_angle from thread
@@ -64,6 +65,10 @@ class Localization:
 		self.d_angle = 0
 		self.target_angle = 0
 		self.start_angle = self.imu_angle
+=======
+		self.imu_angle = 0
+		self.d_angle = self.imu_angle - self.prior_imu_angle
+>>>>>>> main
 
 		# variables used for controlling steering
 		self.left_adjust = 4 # check, 8 worked in class
