@@ -1,6 +1,6 @@
 # Autonomous Robot Pick and Place
 
-![Robot](robot_pic.png)
+![Robot](media/robot_pic.png)
 
 > Final project for **ENPM701: Autonomous Robots** at the University of Maryland.
 
